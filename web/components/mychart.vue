@@ -20,11 +20,10 @@ export default {
     },
     methods: {
         onClick() {
-            console.log("HERE")
-               const width = 500;
-            const height = 200;
+            const width = 1000;
+            const height = 400;
 
-            const data = this.data.data.slice(0, 100);
+            const data = this.data.data
             console.log(data)
 
             let id = "." + this.data.name

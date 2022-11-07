@@ -1,7 +1,8 @@
-export default {
+module.exports = {
+    
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'web',
+    title: 'Remote Water Qulity Monitor',
     htmlAttrs: {
       lang: 'en'
     },
