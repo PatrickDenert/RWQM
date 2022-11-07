@@ -41,35 +41,35 @@ export default {
             return { 
                 name: "Temperature",
                 color: "Red",
-                data: this.testData.map(function (el) { return {date: el.time, amount: el.temp}})
+                data: this.testData.map(function (el) { return [el.time, el.temp]})
             }
         },
         ph() {
             return { 
                 name: "PH",
                 color: "Blue",
-                data: this.testData.map(function (el) {  return {date: el.time, amount: el.ph}})
+                data: this.testData.map(function (el) {  return [el.time, el.ph]})
             }
         },
         tb() {
             return { 
                 name: "Turbidity",
                 color: "Green",
-                data: this.testData.map(function (el) {  return {date: el.time, amount: el.tb} })
+                data: this.testData.map(function (el) {  return [el.time, el.tb] })
             }
         },
         flow() {
             return { 
                 name: "Flow",
                 color: "Yellow",
-                data: this.testData.map(function (el) { return { date: el.time, amount: el.flow} })
+                data: this.testData.map(function (el) { return [el.time, el.flow] })
             }
         },
         cdt() {
             return { 
                 name: "Conductivity",
                 color: "Purple",
-                data: this.testData.map(function (el) { return {date: el.time, amount: el.cdt}})
+                data: this.testData.map(function (el) { return [el.time, el.cdt]})
             }
         },
     } 
