@@ -9,7 +9,7 @@
     "server": "node server/index.js",
     "dev": "nuxt",
     "build": "nuxt build",
-    "start": "nuxt start",
+    "start": "node server/index.js",
     "generate": "nuxt generate"
   },
   "dependencies": {
