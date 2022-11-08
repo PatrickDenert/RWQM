@@ -70,17 +70,18 @@ async function start() {
     const nuxt = new Nuxt(config);
 
     const { HOST, PORT } = process.env;
-    const host = HOST || (! config.dev ? '0.0.0.0' : 'localhost')
+    const host = HOST || (!config.dev ? '0.0.0.0' : 'localhost')
     const port = PORT || (!config.dev ? 80 : 3000);
 
     app.set('port', port);
 
     //build only in dev mode
-    if(process.env.NODE_ENV === 'development'){
-        console.log("NOE_ENV = development");
+    if(process.env.NODE_ENV === 'development') {
         const builder = new Builder(nuxt);
         await builder.build();
     }
+
+    console.log(host, port);
     
     // Give nuxt middleware to express
     app.use(nuxt.render);
