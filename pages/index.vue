@@ -29,7 +29,7 @@ export default {
         mychart,
     },
     async fetch() {
-        this.testData = await fetch('http://localhost:3000/sensorData').then(res => res.json());
+        this.testData = await fetch('https://water-quality-monitor.herokuapp.com/sensorData').then(res => res.json());
     },
     data() {
         return {
