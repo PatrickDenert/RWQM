@@ -1,6 +1,6 @@
-# fly.toml file generated for twilight-water-1879 on 2022-12-08T03:19:13-05:00
+# fly.toml file generated for rwqm on 2022-12-08T03:42:46-05:00
 
-app = "twilight-water-1879"
+app = "rwqm"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
