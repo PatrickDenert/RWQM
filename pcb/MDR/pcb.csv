@@ -1,0 +1,38 @@
+"Source:","/Users/dave/Documents/school/sdp/pcb/MDR/pcb.kicad_sch"
+"Date:","Thursday, November 10, 2022 at 03:40:49 PM"
+"Tool:","Eeschema (6.0.7-1)-1"
+"Generator:","/Applications/KiCad/KiCad.app/Contents/SharedSupport/plugins/bom_csv_grouped_by_value.py"
+"Component Count:","13"
+
+"Individual Components:"
+
+"Item","Qty","Reference(s)","Value","LibPart","Footprint","Datasheet"
+"","","C1","0.1uF","Device:C","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","~"
+"","","C2","0.1uF","Device:C","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","~"
+"","","C3","0.1uF","Device:C","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","~"
+"","","C4","22pF","Device:C","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","~"
+"","","C5","22pF","Device:C","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","~"
+"","","J1","1x3f Tmp Sens","Connector:Conn_01x03_Male","Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical","~"
+"","","J2","1x4f Screen","Connector:Conn_01x04_Female","Connector_PinSocket_2.54mm:PinSocket_1x04_P2.54mm_Vertical","~"
+"","","J3","1x8f Digital Pin Headers","Connector:Conn_01x08_Female","Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical","~"
+"","","J4","1x2f LED","Connector:Conn_01x02_Female","Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical","~"
+"","","J5","1x3f tmp switch","Connector:Conn_01x03_Female","Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical","~"
+"","","J6","1x2F 5V in","Connector:Conn_01x02_Female","Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical","~"
+"","","U1","ATmega328-P","MCU_Microchip_ATmega:ATmega328-P","Package_DIP:DIP-28_W7.62mm_Socket","http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega328_P%20AVR%20MCU%20with%20picoPower%20Technology%20Data%20Sheet%2040001984A.pdf"
+"","","Y1","16MHz","Device:Crystal","Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm","~"
+
+
+
+"Collated Components:"
+
+"Item","Qty","Reference(s)","Value","LibPart","Footprint","Datasheet"
+"1","3","C1, C2, C3","0.1uF","Device:C","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","~"
+"2","2","C4, C5","22pF","Device:C","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","~"
+"3","1","J1","1x3f Tmp Sens","Connector:Conn_01x03_Male","Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical","~"
+"4","1","J2","1x4f Screen","Connector:Conn_01x04_Female","Connector_PinSocket_2.54mm:PinSocket_1x04_P2.54mm_Vertical","~"
+"5","1","J3","1x8f Digital Pin Headers","Connector:Conn_01x08_Female","Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical","~"
+"6","1","J4","1x2f LED","Connector:Conn_01x02_Female","Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical","~"
+"7","1","J5","1x3f tmp switch","Connector:Conn_01x03_Female","Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical","~"
+"8","1","J6","1x2F 5V in","Connector:Conn_01x02_Female","Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical","~"
+"9","1","U1","ATmega328-P","MCU_Microchip_ATmega:ATmega328-P","Package_DIP:DIP-28_W7.62mm_Socket","http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega328_P%20AVR%20MCU%20with%20picoPower%20Technology%20Data%20Sheet%2040001984A.pdf"
+"10","1","Y1","16MHz","Device:Crystal","Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm","~"

@@ -43,7 +43,7 @@ app.post('/reading', async (req, res) => {
       } catch (error) {
         res.status(500).send(error);
       }
-    
+
 });
 
 app.get('/sensorData', async (req, res) => {
@@ -82,7 +82,7 @@ async function start() {
     }
 
     console.log(host, port);
-    
+
     // Give nuxt middleware to express
     app.use(nuxt.render);
     app.use(router);

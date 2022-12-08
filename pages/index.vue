@@ -4,11 +4,11 @@
             <div :class="'sum-padding'">
                 <div id="chart">
                     <client-only>
-                        <mychart :data="temp"></mychart>
-                        <mychart :data="ph"></mychart>
-                        <mychart :data="tb"></mychart>
-                        <mychart :data="flow"></mychart>
-                        <mychart :data="cdt"></mychart>
+                        <mychart :time="time" :data="temp"></mychart>
+                        <mychart :time="time" :data="ph"></mychart>
+                        <mychart :time="time" :data="tb"></mychart>
+                        <mychart :time="time" :data="flow"></mychart>
+                        <mychart :time="time" :data="cdt"></mychart>
                     </client-only>
                 </div>
             </div>
@@ -24,12 +24,12 @@ import mychart from '../components/mychart';
 export default {
     name: 'IndexPage',
     components: {
-        heady, 
+        heady,
         footy,
         mychart,
     },
     async fetch() {
-        this.testData = await fetch('https://water-quality-monitor.herokuapp.com/sensorData').then(res => res.json());
+        this.testData = await fetch('http://localhost:3000/sensorData').then(res => res.json());
     },
     data() {
         return {
@@ -37,42 +37,49 @@ export default {
         }
     },
     computed: {
-        temp() {
-            return { 
+        time() {
+            return {
                 name: "Temperature",
                 color: "Red",
-                data: this.testData.map(function (el) { return [el.time, el.temp]})
+                data: this.testData.map(function (el) { return el.time })
+            }
+        },
+        temp() {
+            return {
+                name: "Temperature",
+                color: "Red",
+                data: this.testData.map(function (el) { return el.temp })
             }
         },
         ph() {
-            return { 
+            return {
                 name: "PH",
                 color: "Blue",
-                data: this.testData.map(function (el) {  return [el.time, el.ph]})
+                data: this.testData.map(function (el) { return el.ph })
             }
         },
         tb() {
-            return { 
+            return {
                 name: "Turbidity",
                 color: "Green",
-                data: this.testData.map(function (el) {  return [el.time, el.tb] })
+                data: this.testData.map(function (el) {  return el.tb })
             }
         },
         flow() {
-            return { 
+            return {
                 name: "Flow",
                 color: "Yellow",
-                data: this.testData.map(function (el) { return [el.time, el.flow] })
+                data: this.testData.map(function (el) { return el.flow })
             }
         },
         cdt() {
-            return { 
+            return {
                 name: "Conductivity",
                 color: "Purple",
-                data: this.testData.map(function (el) { return [el.time, el.cdt]})
+                data: this.testData.map(function (el) { return el.cdt })
             }
         },
-    } 
+    }
 }
 </script>
 

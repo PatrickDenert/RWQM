@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-   "node": "16.4.2"
+    "node": "16.4.2"
   },
   "scripts": {
     "server": "node server/index.js",
@@ -22,6 +22,7 @@
     "mongoose": "^6.7.1",
     "nuxt": "^2.2.0",
     "nuxt-buefy": "^0.4.24",
+    "timeseries-analysis": "^1.0.12",
     "vue": "^2.7.10",
     "vue-apexcharts": "^1.6.2",
     "vue-server-renderer": "^2.7.10",
