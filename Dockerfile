@@ -11,7 +11,7 @@ RUN npm install \
   --non-interactive \
   --production=false
 
-RUN npm build
+RUN npm run build
 
 RUN rm -rf node_modules && \
   NODE_ENV=production npm install \

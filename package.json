@@ -9,7 +9,7 @@
     "server": "node server/index.js",
     "dev": "nuxt",
     "build": "nuxt build",
-    "start": "node server/index.js",
+    "start": "node --max-old-space-size=220 server/index.js",
     "generate": "nuxt generate"
   },
   "dependencies": {
