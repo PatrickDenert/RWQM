@@ -1,29 +1,8 @@
-6635594715333
-Sensor_Audio
-CUI_CMC-4013-SMT
-Omnidirectional, -42dB, reflowable, electret condenser microphone https://www.cuidevices.com/product/resource/cmc-4013-smt-tr.pdf
-Microphone CUI 
+1676568424905
+footprints
+LT3650EMSE-8.4-PBF
+
+
 0
-2
-2
-Sensor_Audio
-Infineon_PG-LLGA-5-1
-Infineon_PG-LLGA-5-1 StepUp generated footprint, https://www.infineon.com/cms/en/product/packages/PG-LLGA/PG-LLGA-5-1/
-infineon mems microphone
-0
-15
-5
-Sensor_Audio
-Knowles_LGA-5_3.5x2.65mm
-https://www.knowles.com/docs/default-source/model-downloads/sph0641lu4h-1-revb.pdf
-MEMS Microphone LGA
-0
-5
-5
-Sensor_Audio
-ST_HLGA-6_3.76x4.72mm_P1.65mm
-http://www.st.com/content/ccc/resource/technical/document/datasheet/group3/27/62/48/98/44/54/4d/36/DM00303211/files/DM00303211.pdf/jcr:content/translations/en.DM00303211.pdf
-HLGA Sensor Audio
-0
-6
-6
+13
+13
