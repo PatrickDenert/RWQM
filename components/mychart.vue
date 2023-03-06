@@ -23,6 +23,8 @@ export default {
     },
     data() {
         return {
+            iTrendAlpha:0.7,
+            smootherPeriod: 10,
             options: {
                 series: [{
                     name: this.data.name,
@@ -88,18 +90,18 @@ export default {
         },
         min() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
-            var processed = t.ma().output();
-            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+            var min = t.min();
+            return min;
         },
         max() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
-            var processed = t.ma().output();
-            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+            var max = t.mas();
+            return max;
         },
         avg() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
-            var processed = t.ma().output();
-            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+            var avg = t.mean();
+            return avg;
          },
         ma() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
@@ -113,12 +115,12 @@ export default {
         },
         laglessDenoise() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
-            var processed = t.ma().output();
+            var processed = t.smoother({period:this.smootherPeriod}).output();
             return processed.map((el, index) => {return [this.time.data[index], el[1]]})
         },
         instantTrendline() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
-            var processed = t.ma().output();
+            var processed = t.dsp_itrend({alpha: this.iTrendAlpha }).output();
             return processed.map((el, index) => {return [this.time.data[index], el[1]]})
         },
         sarimax() {
