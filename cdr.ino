@@ -38,23 +38,11 @@ void loop(void) {
   float conductivity = tds*2;
   float tempF = temperature*1.8 + 32;
 
-  String labels[] = {"temperature: ", "temperature: ", "turbidity: ", "tds: ", "conductivity: ", "waterflow: "};
-  float parameters[] = {temperature, tempF, turbidity, tds, conductivity, waterFlow};
-  String units[] = {" Celsius", " Farenheight", " NTU", " ppm", " us/cm", " L/s"};
- 
   Serial.println("--------------------------------");
-  for (int i = 0 ; i < 5 ; i = i + 1){
-    Serial.print(labels[i]);
-    Serial.print(parameters[i]);
-    Serial.println(units[i]);
-  }
+  String payload = "temperature: " + String(temperature) + " Celsius" + "\ntemperature" + String(tempF) + " Farenheight" + "\nturbidity" + String(turbidity) + " NTU" + "\nTDS: " + String(tds) + " ppm" + "\nConductivity: " + String(conductivity) + " us/cm" + "\nWaterflow: " + String(waterFlow) + " L/s";
+  Serial.println(payload);
 
-  tinyECC e;
-  e.plaintext = "test";
-  e.encrypt();                   // Encrypt plaintext and store result in ciphertext
-  e.genSig();                   // Generate Signature
-  Serial.println(e.ciphertext); // Display ciphertext
-  Serial.println(String(e.Sig[0])+","+String(e.Sig[1])); // Display generated Signature (Signature is a 2-element array)
+  alert(tds,temperature,turbidity,conductivity);
 
 
 
@@ -63,26 +51,30 @@ void loop(void) {
 }
 
 float alert(float tds, float temperature, float turbidity, float conductivity){
+  int trip = 0;
   if(tds > 500){
-    Serial.print("Warning: tds levels past maximum limit!");
-    return 0;
+    Serial.println("Warning: tds levels past maximum limit!");
+    trip = 1;
   }
 
   if(temperature > 40){
-    Serial.print("Warning: temperature past maximum limit!");
-    return 0;
+    Serial.println("Warning: temperature past maximum limit!");
+    trip = 1;
+
   }
 
   if(turbidity > 1){
-    Serial.print("Warning: turbidity past maximum limit!");
-    return 0;
+    Serial.println("Warning: turbidity past maximum limit!");
+    trip = 1;
   }
 
   if(conductivity > 1000){
-    Serial.print("Warning: turbidity past maximum limit!");
-    return 0;
+    Serial.println("Warning: conductivity past maximum limit!");
+    trip = 1;
   }
-  Serial.print("All metrics within safe values");
+  if (trip == 0){
+    Serial.println("All metrics within safe values");
+  }
   return 0;
   }
 
