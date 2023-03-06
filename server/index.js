@@ -9,9 +9,6 @@ dotenv.config();
 const app = express();
 app.use(express.json())
 
-
-
-
 // establish db connection
 const mongoDB = process.env.ATLAS_URI;
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -19,7 +16,10 @@ const db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 
-//create a DB schema
+//-------------------------//
+//---- Database Schema ----//
+//-------------------------//
+
 const sensorSchema = new mongoose.Schema({
     time: String,
     temp: Number,
@@ -30,7 +30,27 @@ const sensorSchema = new mongoose.Schema({
 });
 const Sensor = mongoose.model('Sensor', sensorSchema);
 
-//Routing
+const warningSchema = new mongoose.Schema({
+    warning: String,
+});
+const Warning = mongoose.model('Warning', warningSchema);
+
+const paramSchema = new mongoose.Schema({
+    time: Array,
+    temp: Array,
+    ph: Array,
+    flow: Array,
+    cdt: Array,
+    tb: Array,
+    freq: Number,
+});
+const Params = mongoose.model('Params', paramSchema);
+
+
+//---------------------//
+//-----Sensor data-----//
+//---------------------//
+
 app.post('/reading', async (req, res) => {
     let reading = req.body;
     console.log("new sensor reading: ", reading);
@@ -48,6 +68,89 @@ app.post('/reading', async (req, res) => {
 
 app.get('/sensorData', async (req, res) => {
     console.log('sensorData route')
+    try {
+        const sensorData = await Sensor.find();
+        console.log(sensorData[0])
+        res.send(sensorData);
+    } catch {
+        console.log(error)
+        res.status(500).send(error);
+    }
+});
+
+//------------------//
+//---- Warnings ----//
+//------------------//
+
+app.post('/warning', async (req, res) => {
+    let warning = req.body;
+    console.log("new warning: ", warning);
+    warning = new Warning(warning);
+    try {
+        await warning.save();
+        //send websocket message with data if there is a connection
+        response.send(user);
+        res.status(200).send(':)');
+      } catch (error) {
+        res.status(500).send(error);
+      }
+});
+
+app.get('/getWarning', async (req, res) => {
+    console.log('sensorData route')
+    try {
+        const sensorData = await Sensor.find();
+        console.log(sensorData[0])
+        res.send(sensorData);
+    } catch {
+        console.log(error)
+        res.status(500).send(error);
+    }
+});
+
+app.delete('/deleteWarning', async (req, res) => {
+    try {
+        //do this better
+        await warning.save();
+        //send websocket message with data if there is a connection
+        response.send(user);
+        res.status(200).send(':)');
+      } catch (error) {
+        res.status(500).send(error);
+      }
+});
+
+
+//--------------------//
+//---- Parameters ----//
+//--------------------//
+
+app.get('/getParams', async (req, res) => {
+    console.log('getParams route')
+    try {
+        const sensorData = await Params.find();
+        console.log(sensorData[0])
+        res.send(sensorData);
+    } catch {
+        console.log(error)
+        res.status(500).send(error);
+    }
+});
+
+app.post('/setParams', async (req, res) => {
+    console.log('setParams route')
+    try {
+        const sensorData = await Sensor.find();
+        console.log(sensorData[0])
+        res.send(sensorData);
+    } catch {
+        console.log(error)
+        res.status(500).send(error);
+    }
+});
+
+app.patch('/updateParams', async (req, res) => {
+    console.log('updateParams route')
     try {
         const sensorData = await Sensor.find();
         console.log(sensorData[0])

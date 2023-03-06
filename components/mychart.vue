@@ -86,7 +86,42 @@ export default {
         series() {
             return this.data.data.map((el, index) => {return [this.time.data[index], el]})
         },
-         ma() {
+        min() {
+            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
+            var processed = t.ma().output();
+            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+        },
+        max() {
+            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
+            var processed = t.ma().output();
+            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+        },
+        avg() {
+            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
+            var processed = t.ma().output();
+            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+         },
+        ma() {
+            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
+            var processed = t.ma().output();
+            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+        },
+        LinReg() {
+            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
+            var processed = t.ma().output();
+            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+        },
+        laglessDenoise() {
+            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
+            var processed = t.ma().output();
+            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+        },
+        instantTrendline() {
+            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
+            var processed = t.ma().output();
+            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+        },
+        sarimax() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
             var processed = t.ma().output();
             return processed.map((el, index) => {return [this.time.data[index], el[1]]})
