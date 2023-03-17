@@ -4,11 +4,12 @@
             <div :class="'sum-padding'">
                 <div id="chart">
                     <client-only>
-                        <mychart :time="time" :data="temp"></mychart>
-                        <mychart :time="time" :data="ph"></mychart>
-                        <mychart :time="time" :data="tb"></mychart>
-                        <mychart :time="time" :data="flow"></mychart>
-                        <mychart :time="time" :data="cdt"></mychart>
+                        <splashpage :warningCode="warning"></splashpage>
+                        <mychart :time="time" :data="temp" class="white"></mychart>
+                        <mychart :time="time" :data="ph" class="gray"></mychart>
+                        <mychart :time="time" :data="tb" class="white"></mychart>
+                        <mychart :time="time" :data="flow" class="gray"></mychart>
+                        <mychart :time="time" :data="cdt" class="white"></mychart>
                     </client-only>
                 </div>
             </div>
@@ -20,6 +21,7 @@
 import heady from '../components/header';
 import footy from '../components/footer';
 import mychart from '../components/mychart';
+import splashpage from '../components/splash-page.vue';
 
 export default {
     name: 'IndexPage',
@@ -27,56 +29,60 @@ export default {
         heady,
         footy,
         mychart,
+        splashpage,
     },
     async fetch() {
-        this.testData = await fetch('http://rwqm.fly.dev/sensorData').then(res => res.json());
+        this.testData = await fetch('http://localhost:3000/sensorData').then(res => res.json());
+        this. waringCode = await fetch('http://localhost:3000/getWarning').then(res => res.json()).warningCode;
+        this.params = await fetch('http://localhost:3000/getParams').then(res => res.json());
     },
     data() {
         return {
-            testData: []
+            testData: [],
+            warning: 0,
+            params: {},
         }
     },
     computed: {
         time() {
             return {
-                name: "Temperature",
-                color: "Red",
+                name: "Time",
                 data: this.testData.map(function (el) { return el.time })
             }
         },
         temp() {
             return {
                 name: "Temperature",
-                color: "Red",
-                data: this.testData.map(function (el) { return el.temp })
+                data: this.testData.map(function (el) { return el.temp }),
+                yAxisLabel: 'Temperature (C)'
             }
         },
         ph() {
             return {
-                name: "PH",
-                color: "Blue",
-                data: this.testData.map(function (el) { return el.ph })
+                name: "TDS",
+                data: this.testData.map(function (el) { return el.ph }),
+                yAxisLabel: 'TDS (mg/L)'
             }
         },
         tb() {
             return {
                 name: "Turbidity",
-                color: "Green",
-                data: this.testData.map(function (el) {  return el.tb })
+                data: this.testData.map(function (el) {  return el.tb }),
+                yAxisLabel: 'Turbidity (NTU)'
             }
         },
         flow() {
             return {
                 name: "Flow",
-                color: "Yellow",
-                data: this.testData.map(function (el) { return el.flow })
+                data: this.testData.map(function (el) { return el.flow }),
+                yAxisLabel: 'Flow (cfs)'
             }
         },
         cdt() {
             return {
                 name: "Conductivity",
-                color: "Purple",
-                data: this.testData.map(function (el) { return el.cdt })
+                data: this.testData.map(function (el) { return el.cdt }),
+                yAxisLabel: 'Conductivity (uS/cm)'
             }
         },
     }
@@ -84,7 +90,11 @@ export default {
 </script>
 
 <style>
-.sum-padding {
-    padding-top: 100px;
+.white{
+    background-color: white;
+}
+
+.gray{
+    background-color: #FBFBFB;
 }
 </style>

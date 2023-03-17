@@ -2,10 +2,7 @@
     <b-navbar class="shadow">
         <template #brand>
             <b-navbar-item tag="router-link" :to="{ path: '/' }">
-                <img
-                    src="https://raw.githubusercontent.com/buefy/buefy/dev/static/img/buefy-logo.png"
-                    alt="Lightweight UI components for Vue.js based on Bulma"
-                >
+                <span class='title'>RWQM</span>
             </b-navbar-item>
         </template>
         <template #start>
@@ -13,16 +10,20 @@
                 Home
             </b-navbar-item>
             <b-navbar-item href="#">
-                Documentation
+                Temp
             </b-navbar-item>
-            <b-navbar-dropdown label="Info">
-                <b-navbar-item href="#">
-                    About
-                </b-navbar-item>
-                <b-navbar-item href="#">
-                    Contact
-                </b-navbar-item>
-            </b-navbar-dropdown>
+            <b-navbar-item href="#">
+                Ph
+            </b-navbar-item>
+            <b-navbar-item href="#">
+                Conductivity
+            </b-navbar-item>
+            <b-navbar-item href="#">
+                Turbidity
+            </b-navbar-item>
+            <b-navbar-item href="#">
+                Flow
+            </b-navbar-item>
         </template>
 
         <template #end>
@@ -49,5 +50,17 @@ export default {
 <style>
 .shadow{
     box-shadow: 10px 5px 5px rgba(0,0,0,0.2);
+}
+.title{
+    color: #800000;
+}
+
+.is-primary {
+    background-color: #800000 !important;
+}
+
+.is-light {
+    background-color: #BEA6A0 !important;
+    color:#FFFFFF !important;
 }
 </style>
