@@ -33,22 +33,24 @@ message = pad(message)
 
 // generate MAC
 const hash = hashStringToArray(md5(message));
-var aes = new aesjs.ModeOfOperation.cbc(key_good, iv); //set AES State
+var aes = new aesjs.ModeOfOperation.cbc(key_good, iv); // Reset AES State
 const MAC = aes.encrypt(hash);
 
 // Concatenate message and MAC and encrypt
 let payload = concat(message, MAC)
-var aes = new aesjs.ModeOfOperation.cbc(key_good, iv);
+var aes = new aesjs.ModeOfOperation.cbc(key_good, iv); // Reset AES state
 payload = aes.encrypt(payload);
 payload = Array.from(payload)
 
-// send as binary blob over the internet
+// send over the internet
 let response = postData(payload)
 console.log(response)
 
 //------------------------//
 //-- send a bad message --//
 //------------------------//
+
+// use the wrong key to send a message
 const MAC_bad = aes_bad.encrypt(hash);
 const payload_bad = Array.from(aes_bad.encrypt(payload));
 response = postData(payload_bad)

@@ -52,8 +52,8 @@
                             <span>Instantaneous Trendline</span>
                         </label>
                         <div class="it-options" v-if="show['Instantaneous Trendline']">
-                            <div>moving average window</div>
-                            <input type="range" min="0.01" max="0.2" class="slider" v-model="iTrendAlpha" v-on:input="updateIT">
+                            <div>Alpha Value</div>
+                            <input type="range" min="0.01" max="0.7" step="0.01" class="slider" v-model="iTrendAlpha" v-on:input="updateIT">
                         </div>
                     </li>
                     <li class ="flex-element-grow">
@@ -107,6 +107,7 @@
 <script>
 import timeseries from 'timeseries-analysis'
 import ss from 'simple-statistics'
+//import ARIMAPromise from 'arima/async'
 
 export default {
     name: 'IndexPage',
@@ -246,8 +247,6 @@ export default {
             return data.data.map((el, index) => {return [this.time.data[index], el[1]]});
         },
         sarimax() {
-            // const ARIMAPromise = require('arima/async')
-            //
             // ARIMAPromise.then(ARIMA => {
             //     const ts = this.data.data;
             //     const arima = new ARIMA({ p: 2, d: 1, q: 2, P: 0, D: 0, Q: 0, S: 0, verbose: false }).train(ts)
@@ -269,13 +268,13 @@ export default {
     },
     methods: {
         timeout() {
-            clearTimeout()
-            this.options.series[0].data = this.series
+            clearTimeout();
+            this.options.series[0].data = this.series;
             this.chart.render();
         },
         onRadioButton(series) {
             this.show[series] =!this.show[series]
-            this.setSeriesObject()
+            this.setSeriesObject();
             this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
         },
         setSeriesObject(){
@@ -290,14 +289,14 @@ export default {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
             var processed = t.ma({period: this.maWindow}).output();
             var ma = processed.map((el, index) => {return [this.time.data[index], el[1]]})
-            this.options.series[1].data = ma
+            this.options.series[1].data = ma;
             this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
         },
         updateLD() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
             var processed = t.smoother({period:this.smootherPeriod}).output();
             var ld = processed.map((el, index) => {return [this.time.data[index], el[1]]})
-            this.options.series[2].data = ld
+            this.options.series[2].data = ld;
             this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
         },
         updateWR() {
@@ -305,13 +304,15 @@ export default {
             t.smoother({period:this.wrSmootherPeriod}).save('smoothed');
             var data = t.sliding_regression_forecast({ sample: this.wrSampleSize, degree: this.wrDegree, method: this.wrMethod });
             let wr = data.buffer.map((el, index) => {return [this.time.data[index], el[1]]});
-            this.options.series[5].data = wr
+            this.options.series[5].data = wr;
             this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
         },
         updateIT() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
             var processed = t.dsp_itrend({alpha: this.iTrendAlpha }).output();
-            return processed.map((el, index) => {return [this.time.data[index], el[1]]})
+            let it= processed.map((el, index) => {return [this.time.data[index], el[1]]})
+            this.options.series[3].data = it;
+            this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series);
         },
         updateSA() {
             var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
