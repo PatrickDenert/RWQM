@@ -1,5 +1,11 @@
 #include <OneWire.h>
 #include <tinyECC.h>
+#include <SHA256.h>
+#include <ArduinoJson.h>
+#include <FastCRC.h>
+#include <tinyECC.h>
+
+
 #define TdsSensorPin A1
 #define VREF 5.0      // analog reference voltage(Volt) of the ADC
 #define SCOUNT  30           // sum of sample point
@@ -10,6 +16,30 @@ float averageVoltage = 0,tdsValue = 0;
 int DS18S20_Pin = 2; //DS18S20 Signal pin on digital 2
 volatile double waterFlow;
 
+class CrcWriter {               //class given by json library to hash json
+public:
+  CrcWriter() {
+    _hash = _hasher.crc32(NULL, 0);
+  }
+
+  size_t write(uint8_t c) {
+    _hash = _hasher.crc32_upd(&c, 1);
+  }
+
+  size_t write(const uint8_t *buffer, size_t length) {
+    _hash = _hasher.crc32_upd(buffer, length);
+  }
+
+  uint32_t hash() const {
+    return _hash;
+  }
+
+private:
+  FastCRC32 _hasher;
+  uint32_t _hash;
+};
+
+
 //Temperature chip i/o
 OneWire ds(DS18S20_Pin);  // on digital pin 2one
 
@@ -18,6 +48,7 @@ void setup(void) {
   pinMode(TdsSensorPin,INPUT);
   waterFlow = 0;
   attachInterrupt(1, pulse, RISING);  //set interrupt pin to d3, call pulse() on interrupt, call interrupt when pin goes L->H
+  pinMode(7,INPUT);
   
 }
 
@@ -25,6 +56,11 @@ void loop(void) {
   float temperature = 0;
   float turbidity = 0;
   float tds = 0;
+
+  StaticJsonDocument<200> doc;
+  
+
+
   
   for(int i = 0; i<100; i++){                //take lots of samples of measurements
     temperature = temperature + getTemp();
@@ -38,44 +74,73 @@ void loop(void) {
   float conductivity = tds*2;
   float tempF = temperature*1.8 + 32;
 
+  doc["temperature"] = temperature;         //add parammeters to json file
+  doc["temperature"] = tempF;
+  doc["turbidity"] = turbidity;
+  doc["tds"] = tds;
+  doc["conductivity"] = conductivity;
+  
+
   Serial.println("--------------------------------");
-  String payload = "temperature: " + String(temperature) + " Celsius" + "\ntemperature" + String(tempF) + " Farenheight" + "\nturbidity" + String(turbidity) + " NTU" + "\nTDS: " + String(tds) + " ppm" + "\nConductivity: " + String(conductivity) + " us/cm" + "\nWaterflow: " + String(waterFlow) + " L/s";
-  Serial.println(payload);
+  //String payload = "temperature: " + String(temperature) + " Celsius" + "\ntemperature" + String(tempF) + " Farenheight" + "\nturbidity" + String(turbidity) + " NTU" + "\nTDS: " + String(tds) + " ppm" + "\nConductivity: " + String(conductivity) + " us/cm" + "\nWaterflow: " + String(waterFlow) + " L/s";
+  //Serial.println(payload);
 
-  alert(tds,temperature,turbidity,conductivity);
+  
+  byte error_code = alert(tds,temperature,turbidity,conductivity);    //get error code
 
+  doc["error code"] = String(error_code,BIN);
 
+  //Serial.println(error_code,BIN);
+
+  serializeJsonPretty(doc, Serial);
+
+  CrcWriter writer;
+  serializeJson(doc, writer);
+  Serial.println(writer.hash());              //hash json file
+
+  tinyECC e;                                  
+  e.plaintext = writer.hash();
+  float t0 = millis();
+  e.encrypt();                                //encrypt hash
+  Serial.println(millis()-t0);
+  Serial.println(e.ciphertext);     
+
+  e.decrypt();
+  Serial.println(e.plaintext);
+ 
 
   delay(500);  //pause arduino
-  
 }
 
-float alert(float tds, float temperature, float turbidity, float conductivity){
-  int trip = 0;
+float alert(float tds, float temperature, float turbidity, float conductivity){     //error code generator
+  byte error_code = B0000;
   if(tds > 500){
     Serial.println("Warning: tds levels past maximum limit!");
-    trip = 1;
+    error_code = error_code | B1000;
+    
   }
 
-  if(temperature > 40){
-    Serial.println("Warning: temperature past maximum limit!");
-    trip = 1;
+  if(temperature > 40 | temperature < 0){
+    Serial.println("Warning: temperature outside safe limit!");
+    error_code = error_code | B0100;
 
   }
 
   if(turbidity > 1){
     Serial.println("Warning: turbidity past maximum limit!");
-    trip = 1;
+    error_code = error_code | B0010;
+    
   }
 
   if(conductivity > 1000){
     Serial.println("Warning: conductivity past maximum limit!");
-    trip = 1;
+    error_code = error_code | B0001;
+    
   }
-  if (trip == 0){
+  if (error_code == 0){
     Serial.println("All metrics within safe values");
   }
-  return 0;
+  return error_code;
   }
 
 float getTDS(float temperature){
@@ -192,3 +257,4 @@ void pulse()   //measure the quantity of square wave
 {
   waterFlow += 1.0 / 150.0; // 150 pulses=1L (refer to product specification）
 }
+
