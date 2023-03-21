@@ -28,12 +28,17 @@ module.exports = function() {
             console.log("Success, The MACs Match");
             message = removePadding(message)
             message = aesjs.utils.utf8.fromBytes(message);
-            console.log(message, typeof(message))
+            message = message.split(',');
+            var result = '';
+            for (let i = 0; i < message.length; i++) {
+              result += String.fromCharCode(parseInt(message[i]));
+            }
+            console.log(result, typeof(result))
             req.body = message
             return next();
         } else {
             console.log('Failure, the MACs do not match');
-            return res.sendStatus(failedStatusCode);
+            return res.status(500).send(JSON.stringify({ response: 'Credentials Not Valid' }));
         }
     };
 };

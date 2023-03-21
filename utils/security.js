@@ -12,19 +12,12 @@ const key_bad = [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 const iv = [ 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,35, 36 ];
 var aes_bad = new aesjs.ModeOfOperation.cbc(key_bad, iv);
 
-// faux data from sensors
-const reading = {
-    time: "2022-11-06T21:32:52.826Z",
-    temp: 50,
-    ph: 7,
-    flow: 30,
-    cdt: 20,
-    tb: 10,
-};
 
 //-------------------------//
 //-- send a good message --//
 //-------------------------//
+
+
 
 // convert message to binary
 let message = JSON.stringify(reading);

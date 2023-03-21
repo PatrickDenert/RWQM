@@ -2,22 +2,23 @@ const express = require('express');
 const router = express.Router();
 const { Sensor, Warning, Params} = require('../db_schema/index.js')
 const secured = require('../middleware/security.js')
+const ARIMA = require('arima')
 
 //---------------------//
 //-----Sensor data-----//
 //---------------------//
 
-router.post('/reading', async (req, res) => {
+router.post('/reading', secured(), async (req, res) => {
     let reading = req.body;
-    console.log("new sensor reading: ", reading);
-    reading = new Sensor(reading);
+    //console.log("new sensor reading: ", reading);
+    // reading = new Sensor(reading);
     try {
-        await reading.save();
-        //send websocket message with data if there is a connection
-        response.send(user);
-        res.status(200).send(':)');
+    //     await reading.save();
+    //     //send websocket message with data if there is a connection
+    //     response.send(user);
+        res.status(200).send(JSON.stringify({ response: 'Reading accepted'} ));
       } catch (error) {
-        res.status(500).send(error);
+        res.status(500).send(JSON.stringify({ response: error }));
       }
 });
 
@@ -111,6 +112,16 @@ router.patch('/updateParams', async (req, res) => {
         console.log(error)
         res.status(500).send(error);
     }
+});
+
+router.post('/sarimax', async (req, res) => {
+    console.log('sarimax route');
+    let ts = req.body.ts;
+    console.log(ts.length);
+    const arima = new ARIMA({ auto: true }).fit(ts);
+    console.log(arima);
+    const [pred, errors] = arima.predict(500);
+    res.send(JSON.stringify({pred: pred, errors: errors}))
 });
 
 module.exports = router;

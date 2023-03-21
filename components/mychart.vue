@@ -120,6 +120,10 @@ export default {
             type: Object,
             default: () => {return {}}
         },
+        baseURL: {
+            type: Object,
+            default: () => {return {}}
+        },
     },
     data() {
         return {
@@ -129,9 +133,10 @@ export default {
                 'Instantaneous Trendline':false,
                 "Linear Regression":false,
                 'Windowed Regression':false,
-                "SARIMAX FORECASTING": false,
+                "SARIMAX Forecasting": false,
 
             },
+            sarimax:[],
             maWindow: 20,
             iTrendAlpha: 0.08,
             smootherPeriod: 10,
@@ -246,14 +251,6 @@ export default {
             var data = t.sliding_regression_forecast({ sample: this.wrSampleSize, degree: this.wrDegree, method: this.wrMethod });
             return data.data.map((el, index) => {return [this.time.data[index], el[1]]});
         },
-        sarimax() {
-            // ARIMAPromise.then(ARIMA => {
-            //     const ts = this.data.data;
-            //     const arima = new ARIMA({ p: 2, d: 1, q: 2, P: 0, D: 0, Q: 0, S: 0, verbose: false }).train(ts)
-            //     const [pred, errors] = arima.predict(10)
-            // });
-            // return []
-        },
         apexcharts() {
             if(process.client) {
                 return require('apexcharts');
@@ -272,7 +269,14 @@ export default {
             this.options.series[0].data = this.series;
             this.chart.render();
         },
-        onRadioButton(series) {
+        async onRadioButton(series) {
+            if(series === "SARIMAX Forecasting") {
+                console.log('calling sarimax');
+                let predictions = await this.getSarimaxPredictions();
+                console.log(predictions);
+                this.sarimax = await this.formatSarmaxPredictions(predictions.pred);
+                console.log(this.sarimax);
+            }
             this.show[series] =!this.show[series]
             this.setSeriesObject();
             this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
@@ -315,16 +319,7 @@ export default {
             this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series);
         },
         updateSA() {
-            var t = new timeseries.main(timeseries.adapter.fromArray(this.data.data));
-            var processed = t.ma({period: this.maWindow}).output();
-            var ma = processed.map((el, index) => {return [this.time.data[index], el[1]]})
-            this.options.series[1].data = ma
-            this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
-            this.apexcharts.exec(this.chart.opts.chart.id, 'toggleSeries', ['Lagless Denoising'] )
-            this.apexcharts.exec(this.chart.opts.chart.id, 'toggleSeries', ['Instantaneous Trendline'] )
-            this.apexcharts.exec(this.chart.opts.chart.id, 'toggleSeries', ['Linear Regression'] )
-            //this.apexcharts.exec(this.chart.opts.chart.id, 'toggleSeries', ['SARIMAX Forecasting'] )
-            this.apexcharts.exec(this.chart.opts.chart.id, 'toggleSeries', ['Windowed Regression'] )
+            return null
         },
         setARME(){
             this.wrMethod='ARMaxEntropy'
@@ -333,6 +328,20 @@ export default {
         setARLS(){
             this.wrMethod='ARLeastSquare'
             this.updateWR()
+        },
+        async getSarimaxPredictions() {
+            console.log(this.data.data);
+            const url = `${this.baseURL}/sarimax`
+            let res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ts: this.data.data}),
+            })
+            return res.json()
+        },
+        async formatSarmaxPredictions(predictions) {
+            let firstDate = new Date (this.time.data[this.time.data.length - 1]).getTime();
+            return predictions.map((el, i) => {return [new Date(firstDate + 900000*i), el]});
         }
     },
     mounted(){
