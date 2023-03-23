@@ -1,50 +1,46 @@
 var {SerialPort} = require('serialport');
-const { ReadlineParser } = require('@serialport/parser-readline')
-
 var md5 = require('md5');
 var aesjs = require('aes-js')
 var fetch = require('node-fetch')
-var http = require("http");
 
-// initialize keys and AES module
-const key_good = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-const key_bad = [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-const iv = [ 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,35, 36 ];
-var aes_bad = new aesjs.ModeOfOperation.cbc(key_bad, iv);
+let message = []
 
-let message = [];
-
+// configuration for the serial port
 var port = new SerialPort( {
     path: '/dev/cu.usbmodem141401',
     baudRate: 9600,
 })
 
-var result = "";
 
+// listen for data on the serial port
 port.on('data', async function (data) {
-    for(let i = 0; i < data.length; i++){
-        message.push(data[i]);
-    }
-    if(message[message.length -1 ] === 0x7D){
-        console.log('end of message');
 
-     for (let i = 0; i < message.length; i++) {
-       result += String.fromCharCode(message[i]);
-     }
+    // data comes in in small chunks,
+    // concatenate data Arrays until full message is received
+    message = message.concat(Array.from(data))
 
-     console.log('message: ', result)
-     let [encryptedMessage, badEncryptedMessage] = encryptMessage(message);
-     let response = await sendMessage(encryptedMessage);
-     console.log(response);
-     response = await sendMessage(badEncryptedMessage);
-     console.log(response);
+    // messages are always 112 bytes, check length of message
+    if(message.length === 112){
+        console.log(message);
 
-     result = "";
-     message = [];
+        // convert array of bytes to String of letters
+        let result = message.map(x => {return String.fromCharCode(x)}).join('');
+
+        //send to the server
+        let res = await postData(message);
+        console.log(res);
+
+        // reset the message
+        message = [];
     }
 })
 
-async function sendMessage(payload) {
+
+//--------------------------//
+//---- Helper Functions ----//
+//--------------------------//
+
+async function postData(payload) {
     try{
         const response = await fetch('http://localhost:3000/reading', {
             method: 'post',
@@ -58,10 +54,20 @@ async function sendMessage(payload) {
     }
 }
 
+//-------------------------//
+//---- Deprecated Code ----//
+//-------------------------//
+
+// initialize keys and AES module
+// const key_good = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+// const key_bad = [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+// const iv = [ 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,35, 36 ];
+// var aes_bad = new aesjs.ModeOfOperation.cbc(key_bad, iv);
+
 function encryptMessage(message) {
-    console.log(message);
+    //console.log(message);
     message = aesjs.utils.utf8.toBytes(message);
-    console.log(message);
+    //console.log(message);
     message = pad(message)
 
     // generate MAC
@@ -105,18 +111,4 @@ function concat(message, MAC) {
     concatArray.set(message);
     concatArray.set(MAC, message.length);
     return concatArray
-}
-
-async function postData(payload) {
-    try{
-        const response = await fetch('http://localhost:3000/reading', {
-            method: 'post',
-            body: JSON.stringify({payload: payload}),
-            headers: {'Content-Type': 'application/json'}
-        });
-        const data = await response.json();
-        return data
-    } catch (err) {
-        console.log(err)
-    }
 }

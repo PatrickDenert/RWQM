@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-let currTime  = 1667770372826;
+let currTime  = Date.now();;
 let temp = 50;
 let ph = 7;
 let flow = 30;

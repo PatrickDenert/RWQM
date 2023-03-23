@@ -11,7 +11,7 @@ sendData(arr);
 
 async function postSensorData(payload) {
     try{
-        const response = await fetch('http://localhost:3000/reading', {
+        const response = await fetch('http://localhost:3000/mockReading', {
             method: 'POST',
             body: JSON.stringify(payload),
             headers: {'Content-Type': 'application/json'}

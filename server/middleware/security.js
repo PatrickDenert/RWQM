@@ -1,9 +1,13 @@
 var md5 = require('md5');
-var aesjs = require('aes-js')
+// var CryptoJS = require('crypto-js');
+var aesjs = require('aes-js');
 
 // initialize keys and AES module
-const key = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-const iv = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,35, 36];
+// var AESKey = '000102030405060708090A0B0C0D0E0F';
+// var key = CryptoJS.enc.Hex.parse(AESKey);
+
+const key = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ];
+const iv = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36];
 
 // global variables
 const MAC_SIZE = 16;
@@ -11,29 +15,34 @@ const failedStatusCode = 401;
 
 module.exports = function() {
     return function secured(req, res, next) {
+        let ciphertext = req.body.payload;
+        var encryptedHex = aesjs.utils.hex.fromBytes(ciphertext);
+        var encryptedBytes = aesjs.utils.hex.toBytes(encryptedHex);
+        var aesCbc = new aesjs.ModeOfOperation.cbc(key, iv);
+        var decryptedBytes = aesCbc.decrypt(encryptedBytes);
 
-        // reset AES state and
-        var aes = new aesjs.ModeOfOperation.cbc(key, iv);
-        let payload = Array.from(aes.decrypt(req.body.payload))
-        let length = payload.length
 
-        let MAC = payload.splice(length - MAC_SIZE, MAC_SIZE)
-        let message = payload;
+        let buff = Buffer.from(decryptedBytes, 'base64');
+        let decryptedHex = buff.toString('hex');
+        let text = buff.toString('ascii');
 
-        let newMAC = hashStringToArray(md5(message));
-        var aes = new aesjs.ModeOfOperation.cbc(key, iv);
-        newMAC = aes.encrypt(newMAC);
+        console.log("text: ", text, text.length);
+        text = text.split('')
 
+
+        // seperate MAC from message
+        let MAC = text.splice(112 - MAC_SIZE, MAC_SIZE).map((el) => {return el.charCodeAt(0)});
+        console.log('oldMAC: ', MAC);
+        let message = text;
+
+        // generate new MAC from message
+        let newMAC = gen_MAC(message);
+
+        // compare MACs
         if (MACs_MATCH(MAC, newMAC)) {
             console.log("Success, The MACs Match");
-            message = removePadding(message)
-            message = aesjs.utils.utf8.fromBytes(message);
-            message = message.split(',');
-            var result = '';
-            for (let i = 0; i < message.length; i++) {
-              result += String.fromCharCode(parseInt(message[i]));
-            }
-            console.log(result, typeof(result))
+            message = removePadding(message).join('')
+            console.log('removepadding', message);
             req.body = message
             return next();
         } else {
@@ -59,8 +68,15 @@ function MACs_MATCH(MAC, newMAC){
 }
 
 function removePadding(message) {
-    while(message[message.length-1] === 0){
+    while(message[message.length-1] != '}'){
         message.pop()
     }
     return message
+}
+
+function gen_MAC(message) {
+    let newMAC = Array.from(key);
+    message.map((el, i) => {newMAC[i%16] ^= el.charCodeAt(0)});
+    console.log("newMAC: ", newMAC);
+    return newMAC
 }
