@@ -1,20 +1,22 @@
 #include <OneWire.h>
 #include <tinyECC.h>
-#include <SHA256.h>
 #include <ArduinoJson.h>
 #include <FastCRC.h>
-#include <tinyECC.h>
+#include <SPI.h>
+#include <SD.h>
 
-
-#define TdsSensorPin A1
+//#define TbSensorPin A0
+//#define TdsSensorPin A1
 #define VREF 5.0      // analog reference voltage(Volt) of the ADC
 #define SCOUNT  30           // sum of sample point
 int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
 int analogBufferTemp[SCOUNT];
 int analogBufferIndex = 0,copyIndex = 0;
 float averageVoltage = 0,tdsValue = 0;
-int DS18S20_Pin = 2; //DS18S20 Signal pin on digital 2
-volatile double waterFlow;
+//int DS18S20_Pin = 2; //DS18S20 Signal pin on digital 2
+volatile double flow;
+//char messageBuffer[96];
+int connection = 0;    //set to 1 if conneted to server (used to toggle SD card)
 
 class CrcWriter {               //class given by json library to hash json
 public:
@@ -41,98 +43,129 @@ private:
 
 
 //Temperature chip i/o
-OneWire ds(DS18S20_Pin);  // on digital pin 2one
+OneWire ds(2);  // on digital pin 2one
 
 void setup(void) {
   Serial.begin(9600);                 //set baudrate
-  pinMode(TdsSensorPin,INPUT);
-  waterFlow = 0;
+  pinMode(A1,INPUT);                  //tds sensor
+  flow = 0;
   attachInterrupt(1, pulse, RISING);  //set interrupt pin to d3, call pulse() on interrupt, call interrupt when pin goes L->H
   pinMode(7,INPUT);
   
+  SD.begin(4);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+
+  if (!SD.begin(4)) {
+    Serial.println(F("SD Card initialization failed!"));
+    
+  }
+  Serial.println(F("SD Card initialization done."));
 }
 
 void loop(void) {
-  float temperature = 0;
-  float turbidity = 0;
+  float temp = 0;
+  float tb = 0;
   float tds = 0;
 
   StaticJsonDocument<200> doc;
   
-
-
-  
   for(int i = 0; i<100; i++){                //take lots of samples of measurements
-    temperature = temperature + getTemp();
-    turbidity = turbidity + getTurbidity();
-    tds = tds + getTDS(temperature/i);
+    temp = temp + getTemp();
+    tb = tb + getTurbidity();
+    tds = tds + getTDS2(temp/(i));
   }
+
+  //temp = getTemp();
+  //tb = tb + getTurbidity();
+  //tds = tds + getTDS2(temp);
   
-  temperature = temperature/100;            //get avg temp measuremnt
-  turbidity = turbidity/100;                //get avg turbidiy measuremnt
+  temp = temp/100;            //get avg temp measuremnt
+  tb = tb/100;                //get avg turbidiy measuremnt
   tds = tds/100;                            //get avg tds measurement
-  float conductivity = tds*2;
-  float tempF = temperature*1.8 + 32;
+  float cdt = tds*2;
+  temp = temp*1.8 + 32;
 
-  doc["temperature"] = temperature;         //add parammeters to json file
-  doc["temperature"] = tempF;
-  doc["turbidity"] = turbidity;
+  doc["temp"] = temp;         //add parammeters to json file
+  doc["tb"] = tb;
   doc["tds"] = tds;
-  doc["conductivity"] = conductivity;
+  doc["cdt"] = cdt;
   
-
-  Serial.println("--------------------------------");
-  //String payload = "temperature: " + String(temperature) + " Celsius" + "\ntemperature" + String(tempF) + " Farenheight" + "\nturbidity" + String(turbidity) + " NTU" + "\nTDS: " + String(tds) + " ppm" + "\nConductivity: " + String(conductivity) + " us/cm" + "\nWaterflow: " + String(waterFlow) + " L/s";
+  Serial.println(F("--------------------------------"));
+  //String payload = "temperature: " + String(temp) + " Celsius" + " Farenheight" + "\nturbidity" + String(tb) + " NTU" + "\nTDS: " + String(tds) + " ppm" + "\nConductivity: " + String(cdt) + " us/cm" + "\nWaterflow: " + String(flow) + " L/s";
   //Serial.println(payload);
 
   
-  byte error_code = alert(tds,temperature,turbidity,conductivity);    //get error code
+  byte error_code = alert(tds,temp,tb,cdt);    //get error code
+  Serial.println(String(error_code,BIN));
 
-  doc["error code"] = String(error_code,BIN);
+  //doc["error code"] = String(error_code,BIN);
 
   //Serial.println(error_code,BIN);
 
-  serializeJsonPretty(doc, Serial);
+  //serializeJsonPretty(doc, Serial);
+  serializeJson(doc,Serial);
 
-  CrcWriter writer;
+  /* CrcWriter writer;
   serializeJson(doc, writer);
   Serial.println(writer.hash());              //hash json file
 
   tinyECC e;                                  
   e.plaintext = writer.hash();
-  float t0 = millis();
   e.encrypt();                                //encrypt hash
-  Serial.println(millis()-t0);
   Serial.println(e.ciphertext);     
 
   e.decrypt();
   Serial.println(e.plaintext);
+ */
  
+  //if (connection){
+  
+  //}
+  File dataFile = SD.open("datalog.txt", FILE_WRITE);
 
-  delay(500);  //pause arduino
+  // if the file is available, write to it:
+  if (dataFile) {
+    //dataFile.println("{\"temp\":77.7875,\"tb\":1962.658,\"tds\":34.00633,\"cdt\":68.01266}");
+    dataFile.println("payload");
+    dataFile.close();
+    Serial.println("SD Write Succesful");
+    // print to the serial port too:
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening datalog.txt");
+  }
+
+  
+
+  delay(5000);  //pause arduino
 }
 
-float alert(float tds, float temperature, float turbidity, float conductivity){     //error code generator
+
+
+float alert(float tds, float temp, float tb, float cdt){     //error code generator
   byte error_code = B0000;
-  if(tds > 500){
+  if((tds * 1.1) > 500){
     Serial.println("Warning: tds levels past maximum limit!");
     error_code = error_code | B1000;
     
   }
 
-  if(temperature > 40 | temperature < 0){
+  if((temp * 1.005) > 40 | (temp * 1.005) < 0){
     Serial.println("Warning: temperature outside safe limit!");
     error_code = error_code | B0100;
 
   }
 
-  if(turbidity > 1){
+  if((tb * 1.073) > 1){
     Serial.println("Warning: turbidity past maximum limit!");
     error_code = error_code | B0010;
     
   }
 
-  if(conductivity > 1000){
+  if((cdt * 1.073) > 1000){
     Serial.println("Warning: conductivity past maximum limit!");
     error_code = error_code | B0001;
     
@@ -143,12 +176,13 @@ float alert(float tds, float temperature, float turbidity, float conductivity){ 
   return error_code;
   }
 
+/*
 float getTDS(float temperature){
   static unsigned long analogSampleTimepoint = millis();
    if(millis()-analogSampleTimepoint > 40U)     //every 40 milliseconds,read the analog value from the ADC
    {
      analogSampleTimepoint = millis();
-     analogBuffer[analogBufferIndex] = analogRead(TdsSensorPin);    //read the analog value and store into the buffer
+     analogBuffer[analogBufferIndex] = analogRead(A1);    //read the analog value and store into the buffer
      analogBufferIndex++;
      if(analogBufferIndex == SCOUNT) 
          analogBufferIndex = 0;
@@ -166,19 +200,25 @@ float getTDS(float temperature){
    }
    return tdsValue;   
   
+  
 }
+
+*/
 float getTurbidity(){
   int sensorValue = analogRead(A0);// read the input on analog pin 0:
   float volt = sensorValue * (5.0 / 1024.0); // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
+  //Serial.println(volt);
   if(volt < 2.5){
     return 3000;
   }
   if(volt > 4.2){
     return 0;
   }
-  float turbidity = -1120.4*volt*volt + 5742.3*volt - 4352.9;
+  else{
+    float turbidity = -1120.4*square(volt) + 5742.3*volt - 4352.9;
+    return turbidity;
+  }
 
-  return turbidity;
 }
 
 float getTemp(){
@@ -255,6 +295,62 @@ int getMedianNum(int bArray[], int iFilterLen)
 
 void pulse()   //measure the quantity of square wave
 {
-  waterFlow += 1.0 / 150.0; // 150 pulses=1L (refer to product specification）
+  flow += 1.0 / 150.0; // 150 pulses=1L (refer to product specification）
 }
 
+
+
+
+void SDCardWrite(String payload) {
+    File file = SD.open("temp.txt", FILE_WRITE);
+
+  // if the file opened okay, write to it:
+  if (file) {
+    Serial.print("Writing to temp.txt...");
+    file.println(payload);
+    // close the file:
+    file.close();
+    Serial.println("done.");
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening data.txt");
+  }
+}
+
+
+void SDCardRead() {
+
+  File file = SD.open("temp.txt");
+  if (file) {
+    Serial.println("test.txt:");
+
+    // read from the file until there's nothing else in it:
+    while (file.available()) {
+      Serial.write(file.read());
+    }
+    // close the file:
+    file.close();
+    Serial.println(F("--- end of file ---"));
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
+}
+
+
+
+float getTDS2(float temperature){
+    int sensorvalue = analogRead(A1);
+   
+    float volt = sensorvalue * (float)VREF / 1024.0;
+    //Serial.println("volt1: "+String(volt));
+
+    float compensationCoefficient=1.0+0.02*(temperature-25.0);
+    float compensationVolatge=volt/compensationCoefficient;  //temperature compensation
+    tdsValue=(133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5;
+    //Serial.print("TDS Value test 2:");
+    //  Serial.print(tdsValue,0);
+    //  Serial.println("ppm");
+
+    return tdsValue;
+}
