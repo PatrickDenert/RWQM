@@ -14,7 +14,8 @@ router.post('/mockReading', async (req, res) => {
     console.log("new sensor reading: ", reading);
     reading = new Sensor(reading);
     try {
-        await reading.save();
+        let response = await reading.save();
+        console.log(response);
         // send websocket message with data if there is a connection
         res.status(200).send(JSON.stringify({ response: 'Reading accepted'} ));
       } catch (error) {
@@ -29,7 +30,7 @@ router.post('/reading', secured(), async (req, res) => {
     console.log("new sensor reading: ", reading);
     reading = new Sensor(reading);
     try {
-        //await reading.save();
+        await reading.save();
         // send websocket message with data if there is a connection
         res.status(200).send(JSON.stringify({ response: 'Reading accepted'} ));
       } catch (error) {
