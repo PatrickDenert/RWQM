@@ -7,7 +7,7 @@ let message = [];
 
 // configuration for the serial port
 var port = new SerialPort( {
-    path: '/dev/cu.usbmodem141401',
+    path: '/dev/cu.usbmodem141101',
     baudRate: 9600,
 })
 

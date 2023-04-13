@@ -4,6 +4,22 @@ const { Sensor, Warning, Params} = require('../db_schema/index.js')
 const secured = require('../middleware/security.js')
 // const ARIMA = require('arima')
 
+//--------------//
+//-----test-----//
+//--------------//
+router.post('/test', async (req, res) => {
+    let message = req.body;
+    // let reading = JSON.parse(req.body);
+    console.log("test message: ", message);
+    try {
+        // send websocket message with data if there is a connection
+        res.status(200).send(JSON.stringify({ response: 'Reading accepted'} ));
+      } catch (error) {
+        res.status(500).send(JSON.stringify({ response: error }));
+      }
+});
+
+
 //---------------------//
 //-----Sensor data-----//
 //---------------------//

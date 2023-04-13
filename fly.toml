@@ -1,8 +1,9 @@
-# fly.toml file generated for rwqm on 2022-12-08T03:42:46-05:00
+# fly.toml file generated for rwqm on 2023-04-13T13:06:24-04:00
 
 app = "rwqm"
 kill_signal = "SIGINT"
 kill_timeout = 5
+primary_region = "bos"
 processes = []
 
 [env]

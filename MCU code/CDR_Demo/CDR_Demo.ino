@@ -327,6 +327,8 @@ void SDCardRead() {
     //Serial.println("error opening test.txt");
   }
 }
+AT+CIPSEND=36
+{"k":"5#p7ILQi","d":"0","t":"test"}
 
 
 
