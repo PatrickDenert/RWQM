@@ -159,13 +159,13 @@ void loop() {
   //free(payloadBuffer);
 
   sprintf(message, "{\"k\":\"5#p7ILQi\",\"d\":\"%s\",\"t\":\"test\"}", base64String);
-  delay(1000);
+  //delay(1000);
   
   //free(base64String);
   
-  delay(10000);
+  //delay(10000);
   sendmsg(message);
-  delay(1000);
+  //delay(1000);
   Serial.flush();
 
   
@@ -173,7 +173,7 @@ void loop() {
   
 
   
-  delay(30000);
+  //delay(5000);
   //free(message);
 
   byte error_code = alert(tds,temp,tb,cdt);
@@ -193,7 +193,7 @@ void loop() {
   Serial.println("memory left: ");
   Serial.println(availableMemory());
 
-  delay(10000);
+  //delay(5000);
   }
   count = count + 1;
   Serial.println("count: ");
