@@ -170,6 +170,7 @@ void setup() {
   }                                                      //Turn OFF SIM7000
   }
   time = time * 1000;
+  time = time - 14400000;                                 //convert time zone
   delay(1000);
 }
 
