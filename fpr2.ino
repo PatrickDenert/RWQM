@@ -2,14 +2,11 @@
 #include <Base64.h>
 #include <OneWire.h>
 #include "OneWire.h"
-//#include "DallasTemperature.h"
-//#include <SD.h>
 #include <SPI.h>
 #include <SD.h>
 OneWire ds(3);
 #include <SoftwareSerial.h>
-#include <stdlib.h>     /* strtoull */
-//DallasTemperature tempSensor(&ds);
+#include <stdlib.h>     /* strtoul */
 
 #define PIN_TX     11
 #define PIN_RX     10
@@ -17,9 +14,6 @@ SoftwareSerial     mySerial(PIN_RX,PIN_TX);
 DFRobot_SIM7000    sim7000(&mySerial);
 unsigned long long time;
 static char        buff[1500];
-
-#define TdsSensorPin A1
-#define VREF 5.0      // analog reference voltage(Volt) of the ADC
 
 float averageVoltage = 0,tdsValue = 0;
 volatile double flow;
@@ -34,50 +28,17 @@ int inputStringLength;
 int encodedLen;
 int count = 0;
 
+bool reconnect = false;
+
 char *ret;
 char buff2[22];
 const char unixtime[9] = "unixtime";
 
-void pulse(){ //measure the quantity of square wave
-  flow += 1.0 / 450.0;
-}
-
-char* getSubString(char* inputString, char* subString,
-    int index, int subStringLength){
-    int counter, inputStringLength = strlen(inputString);    
- 
-    if(index < 0 || index > inputStringLength || 
-          (index + subStringLength) > inputStringLength){
-        printf("Invalid Input");
-        return NULL;
-    }
-    for(counter = 0; counter < subStringLength; counter++){
-        subString[counter] = inputString[index++];
-    }
-    subString[counter] = '\0';
-     
-    return subString;
-}
-void setup() {
-  SD.begin(0);
-  //pinMode(1,INPUT);
-  pinMode(18,OUTPUT);
-  pinMode(14,INPUT);                  //low battery circuit
-  attachInterrupt(2, pulse, RISING);  //DIGITAL Pin 2: Interrupt 0
-
-  pinMode(TdsSensorPin,INPUT);
-  
-  Serial.begin(9600);
-  mySerial.begin(19200);
-
-   //-------------------------------//
-    //------ initialize sim7000 -----//
-    //-------------------------------//
-  
+unsigned long long getTime(){
   Serial.println("time setup");
   int count3 = 0;
   while(1){
-    count3 = count3 + 1;
+    count3 = count3 + 1;                              
     Serial.println(count3);
     Serial.println(F("Turn ON SIM7000......"));
     if(sim7000.turnON()){                             //Turn ON SIM7000
@@ -89,7 +50,8 @@ void setup() {
       connection = false;
       delay(1000);
     }
-    if(count3 == 3){
+    if(count3 == 3){                                 //try to connect to cellular 3 times before switching to offline mode
+      reconnect = true;
       break;
     }
    
@@ -100,7 +62,7 @@ void setup() {
       Serial.println(F("Set baud rate:19200"));
       connection = true;
       }else{
-        Serial.println(F("Faile to set baud rate"));
+        Serial.println(F("Failed to set baud rate"));
         connection = false;
         delay(1000);
       }
@@ -119,37 +81,31 @@ void setup() {
   delay(200);
   if(connection == true){
   Serial.println("Connecting......");
-  if (sim7000.openNetwork(sim7000.eTCP, "worldtimeapi.org", 80)) {  //Start Up TCP or UDP Connection
+  if (sim7000.openNetwork(sim7000.eTCP, "worldtimeapi.org", 80)) {  //Start Up TCP or UDP Connection to time api
     Serial.println("Connect OK");
   } else {
     Serial.println("Fail to connect");
     while (1);
   }
   sim7000.send("GET http://worldtimeapi.org/api/timezone/America/New_York HTTP/1.1\r\nAccept:application/json\r\nHost:worldtimeapi.org\r\n\r\n");    //Send Data Through TCP or UDP Connection GET /api/timezone/America/New_York HTTP/1.0
-  //sim7000.send("GET /api/timezone/America/New_York HTTP/1.0\r\n\r\n");
   int dataNum = sim7000.recv(buff, 1500);                                       //Receive data
-  //Serial.print("dataNum=");
-  //Serial.println(dataNum);
-  //Serial.println(buff);
   delay(500);
-
-  //char *ret;
-  //char buff2[22];
-  //const char unixtime[9] = "unixtime";
-  ret = strstr(buff, unixtime);
+  
+  ret = strstr(buff, unixtime);     //remove response headers from buffer
   sprintf(buff2,"%s\n", ret);
-  //Serial.println(buff2);
+  
   delay(1000);
   char buff3[11];
   
   char subString[20];
 
-  sprintf(buff3,"%s", getSubString(buff2,
+  sprintf(buff3,"%s", getSubString(buff2,       //extract unixtime from json response
         subString, 10, 10));
-  Serial.println(buff3);
-  time = strtoul(buff3,NULL,10);
+        
+  //Serial.println(buff3);
   
-  //printf("The substring is: %s\n", ret);
+  time = strtoul(buff3,NULL,10);               //convert str to unsigned long
+  
   if (sim7000.closeNetwork()) {                                            //End the connection
     delay(1000);
     Serial.println("Close connection");
@@ -169,8 +125,47 @@ void setup() {
     connection = false;
   }                                                      //Turn OFF SIM7000
   }
-  time = time * 1000;
-  time = time - 14400000;                                 //convert time zone
+  time = time * 1000;                                     //convert seconds to milliseconds
+  time = time - 14400000;                                 //convert time zone from est to gmt
+
+  return time;
+  
+}
+
+
+void pulse(){                                             //measure the quantity of square wave from flow sensor
+  flow += 1.0 / 450.0;
+}
+
+char* getSubString(char* inputString, char* subString,        //get substring from inputs (used to extract unix time)
+    int index, int subStringLength){
+    int counter, inputStringLength = strlen(inputString);    
+ 
+    if(index < 0 || index > inputStringLength || 
+          (index + subStringLength) > inputStringLength){
+        printf("Invalid Input");
+        return NULL;
+    }
+    for(counter = 0; counter < subStringLength; counter++){
+        subString[counter] = inputString[index++];
+    }
+    subString[counter] = '\0';
+     
+    return subString;
+}
+
+void setup() {
+  SD.begin(0);                        //init chipselect of SD module
+             
+  pinMode(14,INPUT);                  //low battery circuit input
+  attachInterrupt(2, pulse, RISING);  //DIGITAL Pin 2: Interrupt 0
+
+  pinMode(A1,INPUT);                  //input for tds sensor
+  
+  Serial.begin(9600);                 
+  mySerial.begin(19200);              //serial to cell module
+  
+  time = getTime();                   //get time from api
   delay(1000);
 }
 
@@ -178,6 +173,10 @@ void setup() {
 
 void loop() {
   delay(1000);
+  if(reconnect == true){              //check if system was previously disconneted from cellular and update time
+    time = getTime();
+    reconnect = false;
+  }
     flow = 0.0;
     //-------------------------------//
     //------ initialize sim7000 -----//
@@ -198,7 +197,7 @@ void loop() {
       connection = false;
       delay(1000);
     }
-    if(count2 == 3){
+    if(count2 == 3){                                 //try 3 times to connect to cellular and go in offline mode if not
       break;
     }
    
@@ -214,7 +213,7 @@ void loop() {
         delay(1000);
       }
   }
-  if(connection == true){
+  if(connection == true){                                 //attach to cellular service
      if(sim7000.attacthService()){
         Serial.println(F("Attatched to Service"));
         connection = true;
@@ -227,29 +226,22 @@ void loop() {
   //-------------------------------//
   //-------- Read Sensors ---------//
   //-------------------------------//
-  Serial.println("test3");
-  temp = 0.0;
+  temp = 0.0;                                 //reset sensor readings
   tds = 0.0;
   tb = 0.0;
   cdt = 0.0;
-  flowCalc = getFlow();   
   
-
-  Serial.println("reset sensor values");
-  
-  time += 45000;
-  //time = getTime();
-  
-  Serial.println("collected from sensors");
+  flowCalc = getFlow();                       
+    
+  time += 45000;                              //update time locally to reduce connections to server when not needed
+  //time = getTime();                         //udpate time if needed
   
   temp = getTemp();
-
-  
   tds = getTDS(temp);
   tb = getTurbidity();   
-  cdt = tds*2.0;
-  temp = temp*1.8 + 32;
-  bool battery = getBattLevel();
+  cdt = tds*2.0;                              //cdt calculation
+  temp = temp*1.8 + 32;                       //celsius to farenheight
+  bool battery = getBattLevel();              //check for low battery
   
  
   //-------------------------------//
@@ -257,15 +249,13 @@ void loop() {
   //-------------------------------//
 
   
-  JSONdotStringify(time,temp,flowCalc,cdt,tb,tds,payloadBuffer);  
-  Serial.println(payloadBuffer);
+  JSONdotStringify();                         //turn sensor values into json string 
+  //Serial.println(payloadBuffer);
 
-
-  if(connection == false){
+  if(connection == false){                    //if connection false save to sd card
     SDCardWrite(payloadBuffer);
-    //Serial.println("no connection");
-    //Serial.println(payloadBuffer);
     SDCardRead();
+    reconnect = true;                         //set true to try to restart system next loop
 
     delay(10000);  
   }
@@ -282,14 +272,14 @@ void loop() {
     char base64String[encodedLen+1];
     char message[encodedLen+35];
     
-    Base64.encode(base64String, payloadBuffer, inputStringLength);
-    Serial.println(payloadBuffer);
-
-    sprintf(message, "{\"k\":\"5#p7ILQi\",\"d\":\"%s\",\"t\":\"test\"}", base64String);
+    Base64.encode(base64String, payloadBuffer, inputStringLength);            //base64encode string before sending to server
+    
+    sprintf(message, "{\"k\":\"5#p7ILQi\",\"d\":\"%s\",\"t\":\"test\"}", base64String); //create message json string before sending to cellular
 
     //-------------------------------//
     //------- Send Message ----------//
     //-------------------------------//
+    
     sendmsg(message);
     Serial.flush();
 
@@ -297,16 +287,16 @@ void loop() {
     //------ Send Error Code --------//
     //-------------------------------//
 
-    byte error_code = alert(tds,temp,tb,cdt,battery);
+    byte error_code = alert(tds,temp,tb,cdt,battery);               //generate error code
     Serial.print("error code: ");
 
     Serial.println(error_code);
-    //error_code = 1;
-    if(error_code !=0 ){
+
+    if(error_code !=0 ){                                            //if error detected send to server and email
       char * alertmessage;
       alertmessage = (char*) malloc(100);
       sprintf(alertmessage, "{\"k\":\"5#p7ILQi\",\"d\":\"%i\",\"t\":\"alert\"}", error_code);
-      //Serial.println(alertmessage);
+   
       delay(1000);
       sendmsg(alertmessage);
       delay(1000);
@@ -324,10 +314,7 @@ void loop() {
   Serial.println(count);
   Serial.println(" ended");
 
-  //Serial.print("free Memory: ");
-  //Serial.println(freeMemory());
-
-  if(connection == true){
+  if(connection == true){                            
   Serial.println(F("Turn OFF SIM7000......"));
   delay(1000);
   if(sim7000.turnOFF()){                             //Turn ON SIM7000
@@ -348,7 +335,7 @@ void loop() {
 
 
 
-bool sendmsg(char *message){
+bool sendmsg(char *message){                                                    //send message to hologram cloud which sends it to server
   if(sim7000.openNetwork(sim7000.eTCP, "cloudsocket.hologram.io", 9999)){
     Serial.println(F("Connect OK"));
   } else {
@@ -370,7 +357,7 @@ bool sendmsg(char *message){
 
 
 
-char *ulltoa(uint64_t value, char *buf, int radix) {
+char *ulltoa(uint64_t value, char *buf, int radix) {                              //unsigned long to char
     char tmp[64 + 1];
     char *p1 = tmp, *p2;
     static const char xlat[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -380,32 +367,32 @@ char *ulltoa(uint64_t value, char *buf, int radix) {
     *p2 = '\0';
     return buf;
 }
-bool JSONdotStringify(unsigned long long time, float temp, float flow, float cdt, float tb, float tds, char *payloadBuffer){
-    char timeString[16];
-    ulltoa(time, timeString, 10);
 
-    char tempString[6];
-    dtostrf(temp, 5, 2, tempString);
+bool JSONdotStringify(){                                                          //convert readings and generate json string
+  char timeString[16];
+  ulltoa(time, timeString, 10);
 
-    char flowString[6];
-    dtostrf(flow, 5, 2, flowString);
+  char tempString[7];
+  dtostrf(temp, 6, 2, tempString);
 
-    char cdtString[6];
-    dtostrf(cdt, 5, 2, cdtString);
+  char flowString[6];
+  dtostrf(flow, 5, 2, flowString);
 
-    char tbString[8];
-    dtostrf(tb, 7, 2, tbString);
+  char cdtString[8];
+  dtostrf(cdt, 7, 2, cdtString);
 
-    char tdsString[6];
-    dtostrf(tds, 5, 2, tdsString);
+  char tbString[8];
+  dtostrf(tb, 7, 2, tbString);
 
-    sprintf(payloadBuffer, "{\"time\":%s,\"temp\":%s,\"flow\":%s,\"cdt\":%s,\"tb\":%s,\"tds\":%s}", timeString, tempString, flowString, cdtString, tbString, tdsString);
+  char tdsString[8];
+  dtostrf(tds, 7, 2, tdsString);
 
-    return true;    
+  sprintf(payloadBuffer, "{\"time\":%s,\"temp\":%s,\"flow\":%s,\"cdt\":%s,\"tb\":%s,\"tds\":%s}", timeString, tempString, flowString, cdtString, tbString, tdsString);
+
+  return true;
 }
 
-
-int availableMemory() {
+int availableMemory() {                                 //check memory of mcu (debugging purposes)
   int size = 16000;
   byte *buf;
   while ((buf = (byte *) malloc(--size)) == NULL);
@@ -419,21 +406,17 @@ byte alert(float tds, float temp, float tb, float cdt,byte battery){     //error
     error_code = error_code | B10000;
   }
   if((tb * 1.073) > 5){
-    //Serial.println("Warning: tds levels past maximum limit!");
-    error_code = error_code | B01000; 
+      error_code = error_code | B01000; 
   }
   if((temp * 1.005) > 104 | (temp * 1.005) < 32){
-    //Serial.println("Warning: temperature outside safe limit!");
     error_code = error_code | B00100;
   }
 
   if((tds * 1.1) > 500){
-    //Serial.println("Warning: turbidity past maximum limit!");
     error_code = error_code | B00010;
   }
 
   if((cdt * 1.073) > 1000){
-    //Serial.println("Warning: conductivity past maximum limit!");
     error_code = error_code | B00001; 
   }
 
@@ -441,26 +424,22 @@ byte alert(float tds, float temp, float tb, float cdt,byte battery){     //error
 }
 
 void SDCardWrite(char *payload) {
-    //SD.begin(0);
-    File file = SD.open("temp111.txt", FILE_WRITE);
+    File file = SD.open("reading.txt", FILE_WRITE);
 
   // if the file opened okay, write to it:
   if (file) {
-    Serial.print("Writing to temp.txt...");
     file.println(payload);
     // close the file:
     file.close();
-    Serial.println("done.");
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening data.txt");
+    Serial.println("error opening reading.txt");
   }
  
 }
 
-void SDCardRead() {
- //SD.begin(0);
-  File file = SD.open("temp111.txt");
+void SDCardRead() {                                   //print data in sd card file
+  File file = SD.open("reading.txt");
   if (file) {
     //Serial.println("test.txt:");
 
@@ -477,31 +456,22 @@ void SDCardRead() {
   }
 }
 
-float getTDS(float temperature){
+float getTDS(float temperature){                          //get tds reading from sensor
    int sensorvalue = analogRead(A1);
    
-    float volt = sensorvalue * (float)VREF / 1024.0;
-    //Serial.println("volt1: "+String(volt));
-
+    float volt = sensorvalue * (float)5.0 / 1024.0;
     float compensationCoefficient=1.0+0.02*(temperature-25.0);
     float compensationVolatge=volt/compensationCoefficient;  //temperature compensation
     tdsValue=(133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5;
-    //Serial.print("TDS Value test 2:");
-    //Serial.print(tdsValue,0);
-    //Serial.println("ppm");
-
-    return tdsValue;
+  
+    return tdsValue * (2.0/3.0);
    
 }
 
 float getTurbidity(){
   int sensorValue = analogRead(A0);// read the input on analog pin 0:
   float volt = sensorValue * (5.0 / 1023.0); // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
-  //Serial.println(volt);
-  volt = volt - 0.17;
   
-  //Serial.print("voltage: ");
-  //Serial.println(volt);
   if(volt < 2.5){
     return 3000;
   }
@@ -509,7 +479,7 @@ float getTurbidity(){
     return 0;
   }
   else{
-    float turbidity = -1120.4*square(volt) + 5742.3*volt - 4352.9;
+    float turbidity = -1120.4*square(volt) + 5742.3*volt - 4352.9;    //convert voltage to turbidity value
     return turbidity;
   }
 
@@ -562,11 +532,11 @@ float getTemp(){
 }
 
 volatile double getFlow(){
-  flowCalc = flow * 4;
+  flowCalc = flow * 4;                                    //convert L/h to L/15s to ensure correct flow is sent
   return flowCalc;
 }
 
-bool getBattLevel(){
+bool getBattLevel(){                                      //read input of low battery circuit
   int x = digitalRead(14);
   if (x == 0) {
     return true;
@@ -574,3 +544,4 @@ bool getBattLevel(){
     return false;
   }
 }
+
