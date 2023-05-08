@@ -4,7 +4,6 @@
 #include "OneWire.h"
 #include <SPI.h>
 #include <SD.h>
-OneWire ds(3);
 #include <SoftwareSerial.h>
 #include <stdlib.h>     /* strtoul */
 
@@ -12,23 +11,29 @@ OneWire ds(3);
 #define PIN_RX     10
 SoftwareSerial     mySerial(PIN_RX,PIN_TX);
 DFRobot_SIM7000    sim7000(&mySerial);
-unsigned long long time;
-static char        buff[1500];
 
+OneWire ds(3);
+
+static char        buff[1500];  //response buffer for http requests
+
+unsigned long long time;
 float averageVoltage = 0,tdsValue = 0;
 volatile double flow;
 volatile double flowCalc;       //store flow when sensors are read and convert reading
-char payloadBuffer[300];
-bool connection;                //determine if mcu cellular is working (ie toggle sd module)
+
 float temp;
 float tds;
 float tb;
 float cdt;
+
 int inputStringLength;
 int encodedLen;
 int count = 0;
 
 bool reconnect = false;
+bool connection;                //determine if mcu cellular is working (ie toggle sd module)
+
+char payloadBuffer[300];
 
 char *ret;
 char buff2[22];
