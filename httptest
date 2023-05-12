@@ -1,0 +1,109 @@
+#include <DFRobot_SIM7000.h>
+#include <Base64.h>
+#include <OneWire.h>
+#include "OneWire.h"
+//#include "DallasTemperature.h"
+//#include <SD.h>
+#include <SPI.h>
+#include <SD.h>
+OneWire ds(2);
+#include <SoftwareSerial.h>
+//DallasTemperature tempSensor(&ds);
+
+#define PIN_TX     11
+#define PIN_RX     10
+SoftwareSerial     mySerial(PIN_RX,PIN_TX);
+DFRobot_SIM7000    sim7000(&mySerial);
+bool connection;
+static char        buff[1500];
+
+void setup() {
+  //pinMode(1,INPUT);
+
+  
+  
+  Serial.begin(9600);
+  mySerial.begin(19200);
+}
+
+void loop() {
+
+    //-------------------------------//
+    //------ initialize sim7000 -----//
+    //-------------------------------//
+  
+  Serial.println("---------------------------");
+  int count = 0;
+  while(1){
+    count = count + 1;
+    Serial.println(count);
+    Serial.println(F("Turn ON SIM7000......"));
+    if(sim7000.turnON()){                             //Turn ON SIM7000
+      Serial.println(F("Successfully turned on"));
+      connection = true;
+      break;
+    } else {
+      Serial.println(F("Failed to turn on!"));
+      connection = false;
+      delay(1000);
+    }
+    if(count == 3){
+      break;
+    }
+   
+   }
+  
+  if(connection == true){
+    if(sim7000.setBaudRate(19200)){               //Set SIM7000 baud rate from 115200 to 19200 reduce the baud rate to avoid distortion
+      Serial.println(F("Set baud rate:19200"));
+      connection = true;
+      }else{
+        Serial.println(F("Faile to set baud rate"));
+        connection = false;
+        delay(1000);
+      }
+  }
+  while(connection == true){
+     if(sim7000.attacthService()){
+        Serial.println(F("Attatched to Service"));
+        connection = true;
+        break;
+     } else {
+        Serial.println(F("Fail to Attatch to service"));
+      connection = false;
+     }
+  }
+
+  delay(200);
+  Serial.println("Connecting......");
+  if (sim7000.openNetwork(sim7000.eTCP, "worldtimeapi.org", 80)) {  //Start Up TCP or UDP Connection
+    Serial.println("Connect OK");
+  } else {
+    Serial.println("Fail to connect");
+    while (1);
+  }
+  sim7000.send("GET http://worldtimeapi.org/api/timezone/America/New_York HTTP/1.1\r\nAccept:application/json\r\nHost:worldtimeapi.org\r\n\r\n");    //Send Data Through TCP or UDP Connection GET /api/timezone/America/New_York HTTP/1.0
+  //sim7000.send("GET /api/timezone/America/New_York HTTP/1.0\r\n\r\n");
+  int dataNum = sim7000.recv(buff, 1500);                                       //Receive data
+  Serial.print("dataNum=");
+  Serial.println(dataNum);
+  Serial.println(buff);
+  delay(500);
+
+  char *ret;
+  char buff2[22];
+  const char unixtime[9] = "unixtime";
+  ret = strstr(buff, unixtime);
+  sprintf(buff2,"The substring is: %s\n", ret);
+  Serial.println(buff2);
+  
+   printf("The substring is: %s\n", ret);
+  if (sim7000.closeNetwork()) {                                            //End the connection
+    Serial.println("Close connection");
+  } else {
+    Serial.println("Fail to close connection");
+  }
+  delay(2000);
+  sim7000.turnOFF();                                                       //Turn OFF SIM7000
+}
+
