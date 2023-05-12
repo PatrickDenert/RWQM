@@ -4,15 +4,15 @@
             <div :class="'sum-padding'">
                 <div id="chart">
                     <client-only>
-                        <splashpage :baseURL="baseURL" :warningCode="computedWarning"></splashpage>
-                        <mychart :baseURL="baseURL" :time="time" :data="temp" class="white"></mychart>
-                        <mychart :baseURL="baseURL" :time="time" :data="tds" class="gray"></mychart>
-                        <mychart :baseURL="baseURL" :time="time" :data="tb" class="white"></mychart>
-                        <mychart :baseURL="baseURL" :time="time" :data="flow" class="gray"></mychart>
-                        <mychart :baseURL="baseURL" :time="time" :data="cdt" class="white"></mychart>
-                        <mychart :baseURL="baseURL" :time="time" :data="ph" class="white"></mychart>
-                        <params :baseURL="baseURL" :params="computedParams" class="gray"></params>
-                        <spoofwarning :baseURL="baseURL" class="white"></spoofwarning>
+                        <splashpage :baseURL="sarimaxURL" :warningCode="warning" :socket="socket" :key="refreshkey" ></splashpage>
+                        <mychart :baseURL="sarimaxURL" :time="time" :data="temp" ref="tempChart" class="white" ></mychart>
+                        <mychart :baseURL="sarimaxURL" :time="time" :data="tds" ref="tdsChart" class="gray" ></mychart>
+                        <mychart :baseURL="sarimaxURL" :time="time" :data="tb" ref="tbChart" class="white" ></mychart>
+                        <mychart :baseURL="sarimaxURL" :time="time" :data="flow" ref="flowChart" class="gray" ></mychart>
+                        <mychart :baseURL="sarimaxURL" :time="time" :data="cdt" ref="cdtChart" class="white" ></mychart>
+                        <mychart :baseURL="sarimaxURL" :time="time" :data="ph" ref="phChart" class="white" ></mychart>
+                        <params :baseURL="sarimaxURL" :params="computedParams" class="gray"></params>
+                        <spoofwarning :baseURL="sarimaxURL" class="white"></spoofwarning>
                     </client-only>
                 </div>
             </div>
@@ -27,6 +27,7 @@ import mychart from '../components/mychart';
 import splashpage from '../components/splash-page.vue';
 import params from '../components/params.vue';
 import spoofwarning from '../components/spoofwarning.vue';
+import { io } from 'socket.io-client'
 
 export default {
     name: 'IndexPage',
@@ -41,15 +42,23 @@ export default {
     async fetch() {
         let url = process.env.NODE_ENV === 'development' ? `${process.env.HOST}:${process.env.PORT}` : `${process.env.PROD_URL}`;
         let baseURL = `http://${url}`
+        let sarimaxURL = `https://${url}`
         console.log(baseURL);
         this.baseURL = baseURL
         this.testData = await fetch(`${baseURL}/sensorData`).then(res => res.json());
         this.warning = await fetch(`${baseURL}/getWarning`).then(res => res.json());
+        console.log(this.warning);
+        this.warning = this.warning.warningCode;
+        console.log(this.warning);
         this.params = await fetch(`${baseURL}/getParams`).then(res => res.json());
     },
     data() {
         return {
+            newReading: null,
+            refreshkey: 0,
+            socket: {},
             baseURL: '',
+            sarimaxURL: '',
             testData: [],
             warning: 0,
             params: {
@@ -63,14 +72,66 @@ export default {
             },
         }
     },
+    mounted() {
+        console.log(this.baseURL);
+        const socket = io(this.sarimaxURL);
+
+        socket.on("newReading", (reading) => {
+            console.log("newReading", reading);
+            this.testData.push(reading);
+            this.newReading = reading;
+        });
+
+        socket.on("newWarning", (warning) => {
+            console.log("newWarning", warning);
+            console.log(this.warning);
+            this.warning |= warning.warningCode;
+            console.log(this.warning);
+            this.refreshkey++;
+        });
+
+        setInterval(() => {
+            console.log("setTimeout");
+            if (this.newReading !== null) {
+                console.log("new reading exists", this.newReading);
+                let temp = this.$refs.tempChart;
+                let tds = this.$refs.tdsChart;
+                let td = this.$refs.tbChart;
+                let flow = this.$refs.flowChart;
+                let cdt = this.$refs.cdtChart;
+                let ph = this.$refs.phChart;
+
+                let tempData = [this.newReading.time, this.newReading.temp]
+                let tdsData = [this.newReading.time, this.newReading.tds]
+                let tbData = [this.newReading.time, this.newReading.tb]
+                let flowData = [this.newReading.time, this.newReading.flow]
+                let cdtData = [this.newReading.time, this.newReading.cdt]
+                let phData = [this.newReading.time, this.newReading.ph]
+
+                temp.appendNewData(tempData);
+                tds.appendNewData(tdsData);
+                td.appendNewData(tbData);
+                flow.appendNewData(flowData);
+                cdt.appendNewData(cdtData);
+                ph.appendNewData(phData);
+
+                this.newReading = null;
+
+                console.log(warning);
+            }
+        }, 5000);
+        this.socket = socket;
+    },
     computed: {
         time() {
+            this.refreshkey;
             return {
                 name: "Time",
                 data: this.testData.map(function (el) { return el.time })
             }
         },
         temp() {
+            this.refreshkey;
             return {
                 name: "Temperature",
                 data: this.testData.map(function (el) { return el.temp }),
@@ -78,6 +139,7 @@ export default {
             }
         },
         tds() {
+            this.refreshkey;
             return {
                 name: "TDS",
                 data: this.testData.map(function (el) { return el.tds }),
@@ -85,6 +147,7 @@ export default {
             }
         },
         tb() {
+            this.refreshkey;
             return {
                 name: "Turbidity",
                 data: this.testData.map(function (el) {  return el.tb }),
@@ -92,6 +155,7 @@ export default {
             }
         },
         flow() {
+            this.refreshkey;
             return {
                 name: "Flow",
                 data: this.testData.map(function (el) { return el.flow }),
@@ -99,6 +163,7 @@ export default {
             }
         },
         cdt() {
+            this.refreshkey;
             return {
                 name: "Conductivity",
                 data: this.testData.map(function (el) { return el.cdt }),
@@ -106,6 +171,7 @@ export default {
             }
         },
         ph() {
+            this.refreshkey;
             return {
                 name: "pH",
                 data: this.testData.map(function (el) { return el.ph }),
@@ -120,6 +186,10 @@ export default {
             console.log(this.warning);
             return this.warning.warningCode;
         },
+        socket(){
+            console.log(this.baseURL);
+
+        }
     }
 }
 </script>

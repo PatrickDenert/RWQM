@@ -3,7 +3,8 @@
         <warning :warningCode = "warningCode"
             :baseURL="baseURL"
             :class="warningColor"
-            :message="warningMessage">
+            :message="warningMessage"
+            :func="dismissWarnings">
         </warning>
     </div>
 </template>
@@ -23,25 +24,42 @@ export default {
             default: () => {return ''}
         },
     },
-    components:{
-        warning,
-    },
     computed: {
         warningMessage(){
+            console.log(this.warning)
             if(!this.warningCode){return "There are no warnings at this time"}
             const warnings = [];
-            if (this.warningCode&0x01) {console.log('temperature');warnings.push('temperature')}
-            if (this.warningCode&0x02) {console.log('tds');warnings.push('tds')}
-            if (this.warningCode&0x04) {console.log('cdt');warnings.push('conductivity')}
-            if (this.warningCode&0x08) {console.log('tbd');warnings.push('turbidity')}
-            let warningString= warnings.toString(', ');
+            if (this.warningCode & 0x01) {warnings.push('conductivity')}
+            if (this.warningCode & 0x02) {warnings.push('tds')}
+            if (this.warningCode & 0x04) {warnings.push('temperature')}
+            if (this.warningCode & 0x08) {warnings.push('turbidity')}
+            if (this.warningCode & 0x10) {warnings.push('battery Level')}
+            let warningString= warnings.toString(`, `);
+            console.log(warnings.toString(', '));
+            console.log(warnings.join(', '));
             console.log(warningString);
             const message = "The Following metrics were measured outside of the acceptable range: " + warningString;
             return message
         },
         warningColor(){
             let color = this.warningCode ? 'red' : 'green';
-            return color
+            return color;
+        },
+    },
+    methods: {
+        async dismissWarnings() {
+            console.log('jgf');
+            const url = `${this.baseURL}/deleteWarnings`
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(this.params),
+            });
+
+            this.warningCode = 0;
+            this.message = "There are no warnings at this time"
+
+            console.log(response.json());
         }
     },
 }

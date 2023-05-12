@@ -116,6 +116,10 @@ export default {
             type: Object,
             default: () => {return []}
         },
+        refreshkey: {
+            type: Number,
+            default: () => {return 0}
+        },
         data: {
             type: Object,
             default: () => {return {}}
@@ -264,6 +268,12 @@ export default {
         }
     },
     methods: {
+        appendNewData(data){
+            this.options.series[0].data.push(data);
+            //this.updateAnalytics();
+            this.setSeriesObject();
+            this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
+        },
         timeout() {
             clearTimeout();
             this.options.series[0].data = this.series;
@@ -282,6 +292,7 @@ export default {
             this.apexcharts.exec(this.chart.opts.chart.id, 'updateSeries', this.options.series)
         },
         setSeriesObject(){
+            this.options.series[0].data = this.series;
             this.options.series[1].data = this.show['Moving Average'] ? this.ma : [];
             this.options.series[2].data = this.show['Lagless Denoising'] ? this.laglessDenoise : [];
             this.options.series[3].data = this.show['Instantaneous Trendline'] ? this.instantTrendline : [];
@@ -321,6 +332,13 @@ export default {
         updateSA() {
             return null
         },
+        updateAnalytics(){
+            this.updateMA();
+            this.updateLD();
+            this.updateWR();
+            this.updateIT();
+            this.updateLR();
+        },
         setARME(){
             this.wrMethod='ARMaxEntropy'
             this.updateWR()
@@ -345,7 +363,7 @@ export default {
         }
     },
     mounted(){
-        setTimeout(this.timeout, 2000);
+        setTimeout(this.timeout, 50);
     }
 }
 </script>

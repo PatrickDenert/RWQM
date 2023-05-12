@@ -1,6 +1,6 @@
 #include <AESLib.h>
 #include <OneWire.h>
-#include <SPI.h>
+
 #include <SD.h>
 
 AESLib aesLib;
@@ -327,8 +327,6 @@ void SDCardRead() {
     //Serial.println("error opening test.txt");
   }
 }
-AT+CIPSEND=36
-{"k":"5#p7ILQi","d":"0","t":"test"}
 
 
 

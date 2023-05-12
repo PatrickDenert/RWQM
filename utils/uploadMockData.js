@@ -11,7 +11,7 @@ sendData(arr);
 
 async function postSensorData(payload) {
     try{
-        const response = await fetch('http://localhost:3000/mockReading', {
+        const response = await fetch('https://rwqm.fly.dev/fakeReading', {
             method: 'POST',
             body: JSON.stringify(payload),
             headers: {'Content-Type': 'application/json'}
@@ -32,7 +32,7 @@ function sleep(ms) {
 async function sendData(arr){
     for (var i = 0; i < arr.length; i++) {
         let response = postSensorData(arr[i]);
-        await sleep(200);
+        await sleep(2000);
         console.log(response);
     }
 }

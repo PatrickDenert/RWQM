@@ -32,6 +32,8 @@
     "serialport": "^10.5.0",
     "simple": "^0.2.0",
     "simple-statistics": "^7.8.3",
+    "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1",
     "statistics": "^3.3.0",
     "timeseries-analysis": "^1.0.12",
     "vue": "^2.7.10",

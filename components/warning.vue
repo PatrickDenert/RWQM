@@ -2,7 +2,7 @@
   <div class="warning">
       {{message}}
       <div v-if="warningCode">
-          <button @click="dismissWarnings">Dismiss Warnings</button>
+          <button @click="func">Dismiss Warnings</button>
       </div>
   </div>
 </template>
@@ -23,29 +23,17 @@ export default {
             type: String,
             default: () => {return ''}
         },
+        func: {
+            type: Function,
+            default: () => {return () => {}}
+        },
     },
-    methods: {
-        async dismissWarnings() {
-            console.log('jgf');
-            const url = `${this.baseURL}/deleteWarnings`
-            const response = await fetch(url, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(this.params),
-            });
-            
-            this.warningCode = 0;
-            this.message = "There are no warnings at this time"
-
-            console.log(response.json());
-        }
-    }
 }
 </script>
 
 <style lang="css">
 .warning{
-    padding: 100px;
+    padding: 50px;
     color: white;
     font-size: 20px;
     text-align: center;
@@ -54,5 +42,11 @@ export default {
     max-width: 700px;
     margin-bottom: 200px;
     box-shadow: 10px 5px 5px rgba(0,0,0,0.2);
+}
+
+button {
+    margin-top: 50px !important;
+    color: black !important;
+    background-color: white !important;
 }
 </style>
