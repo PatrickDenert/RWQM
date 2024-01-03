@@ -63,7 +63,7 @@ unsigned long long getTime(){
    }
   
   if(connection == true){
-    if(sim7000.setBaudRate(19200)){               //Set SIM7000 baud rate from 115200 to 19200 reduce the baud rate to avoid distortion
+    if(sim7000.setBaudRate(19200)){                  //Set SIM7000 baud rate from 115200 to 19200 reduce the baud rate to avoid distortion
       Serial.println(F("Set baud rate:19200"));
       connection = true;
       }else{
@@ -93,10 +93,10 @@ unsigned long long getTime(){
     while (1);
   }
   sim7000.send("GET http://worldtimeapi.org/api/timezone/America/New_York HTTP/1.1\r\nAccept:application/json\r\nHost:worldtimeapi.org\r\n\r\n");    //Send Data Through TCP or UDP Connection GET /api/timezone/America/New_York HTTP/1.0
-  int dataNum = sim7000.recv(buff, 1500);                                       //Receive data
+  int dataNum = sim7000.recv(buff, 1500);                           //Receive data
   delay(500);
   
-  ret = strstr(buff, unixtime);     //remove response headers from buffer
+  ret = strstr(buff, unixtime);                                     //remove response headers from buffer
   sprintf(buff2,"%s\n", ret);
   
   delay(1000);
@@ -104,14 +104,12 @@ unsigned long long getTime(){
   
   char subString[20];
 
-  sprintf(buff3,"%s", getSubString(buff2,       //extract unixtime from json response
+  sprintf(buff3,"%s", getSubString(buff2,                           //extract unixtime from json response
         subString, 10, 10));
         
-  //Serial.println(buff3);
+  time = strtoul(buff3,NULL,10);                                    //convert str to unsigned long
   
-  time = strtoul(buff3,NULL,10);               //convert str to unsigned long
-  
-  if (sim7000.closeNetwork()) {                                            //End the connection
+  if (sim7000.closeNetwork()) {                                     //End the connection
     delay(1000);
     Serial.println("Close connection");
   } else {
@@ -121,29 +119,29 @@ unsigned long long getTime(){
   Serial.println(F("Turn OFF SIM7000......"));
   delay(1000);
   
-  if(sim7000.turnOFF()){                             //Turn ON SIM7000
+  if(sim7000.turnOFF()){                                            //Turn ON SIM7000
     Serial.println(F("Successfully turned off"));
     delay(1000);
     connection = true;
   } else {
     Serial.println(F("Failed to turn off!"));
     connection = false;
-  }                                                      //Turn OFF SIM7000
+  }                                                                 //Turn OFF SIM7000
   }
-  time = time * 1000;                                     //convert seconds to milliseconds
-  time = time - 14400000;                                 //convert time zone from est to gmt
+  time = time * 1000;                                               //convert seconds to milliseconds
+  time = time - 14400000;                                           //convert time zone from est to gmt
 
   return time;
   
 }
 
 
-void pulse(){                                             //measure the quantity of square wave from flow sensor
+void pulse(){                                                       //measure the quantity of square wave from flow sensor
   flow += 1.0 / 450.0;
 }
 
-char* getSubString(char* inputString, char* subString,        //get substring from inputs (used to extract unix time)
-    int index, int subStringLength){
+char* getSubString(char* inputString, char* subString,              //get substring from inputs (used to extract unix time)
+    int index, int subStringLength){  
     int counter, inputStringLength = strlen(inputString);    
  
     if(index < 0 || index > inputStringLength || 
@@ -178,7 +176,7 @@ void setup() {
 
 void loop() {
   delay(1000);
-  if(reconnect == true){              //check if system was previously disconneted from cellular and update time
+  if(reconnect == true){              //check if system was previously disconnected from cellular and update time
     time = getTime();
     reconnect = false;
   }
@@ -202,28 +200,28 @@ void loop() {
       connection = false;
       delay(1000);
     }
-    if(count2 == 3){                                 //try 3 times to connect to cellular and go in offline mode if not
+    if(count2 == 3){                                  //try 3 times to connect to cellular and go in offline mode if not
       break;
     }
    
    }
   
   if(connection == true){
-    if(sim7000.setBaudRate(19200)){               //Set SIM7000 baud rate from 115200 to 19200 reduce the baud rate to avoid distortion
+    if(sim7000.setBaudRate(19200)){                  //Set SIM7000 baud rate from 115200 to 19200 reduce the baud rate to avoid distortion
       Serial.println(F("Set baud rate:19200"));
       connection = true;
       }else{
-        Serial.println(F("Faile to set baud rate"));
+        Serial.println(F("Failed to set baud rate"));
         connection = false;
         delay(1000);
       }
   }
   if(connection == true){                                 //attach to cellular service
      if(sim7000.attacthService()){
-        Serial.println(F("Attatched to Service"));
+        Serial.println(F("Attached to Service"));
         connection = true;
      } else {
-        Serial.println(F("Fail to Attatch to service"));
+        Serial.println(F("Fail to Attach to service"));
       connection = false;
      }
   }
@@ -239,13 +237,13 @@ void loop() {
   flowCalc = getFlow();                       
     
   time += 45000;                              //update time locally to reduce connections to server when not needed
-  //time = getTime();                         //udpate time if needed
+  //time = getTime();                         //update time if needed
   
   temp = getTemp();
   tds = getTDS(temp);
   tb = getTurbidity();   
   cdt = tds*2.0;                              //cdt calculation
-  temp = temp*1.8 + 32;                       //celsius to farenheight
+  temp = temp*1.8 + 32;                       //celsius to Fahrenheit
   bool battery = getBattLevel();              //check for low battery
   
  
@@ -277,14 +275,14 @@ void loop() {
     char base64String[encodedLen+1];
     char message[encodedLen+35];
     
-    Base64.encode(base64String, payloadBuffer, inputStringLength);            //base64encode string before sending to server
+    Base64.encode(base64String, payloadBuffer, inputStringLength);                      //base64encode string before sending to server
     
     sprintf(message, "{\"k\":\"5#p7ILQi\",\"d\":\"%s\",\"t\":\"test\"}", base64String); //create message json string before sending to cellular
 
     //-------------------------------//
     //------- Send Message ----------//
     //-------------------------------//
-    
+
     sendmsg(message);
     Serial.flush();
 
@@ -301,11 +299,11 @@ void loop() {
       char * alertmessage;
       alertmessage = (char*) malloc(100);
       sprintf(alertmessage, "{\"k\":\"5#p7ILQi\",\"d\":\"%i\",\"t\":\"alert\"}", error_code);
-   
+
       delay(1000);
       sendmsg(alertmessage);
       delay(1000);
-      
+
       free(alertmessage);
     }
   }
@@ -319,10 +317,10 @@ void loop() {
   Serial.println(count);
   Serial.println(" ended");
 
-  if(connection == true){                            
+  if(connection == true){
   Serial.println(F("Turn OFF SIM7000......"));
   delay(1000);
-  if(sim7000.turnOFF()){                             //Turn ON SIM7000
+  if(sim7000.turnOFF()){                                                        //Turn ON SIM7000
     Serial.println(F("Successfully turned off"));
     delay(1000);
     connection = true;
@@ -332,11 +330,9 @@ void loop() {
     delay(1000);
   }
   }
-                             //calc 
-  
   delay(1000);
-  
-} 
+
+}
 
 
 
@@ -397,7 +393,7 @@ bool JSONdotStringify(){                                                        
   return true;
 }
 
-int availableMemory() {                                 //check memory of mcu (debugging purposes)
+int availableMemory() {                                                  //check memory of mcu (debugging purposes)
   int size = 16000;
   byte *buf;
   while ((buf = (byte *) malloc(--size)) == NULL);
@@ -411,7 +407,7 @@ byte alert(float tds, float temp, float tb, float cdt,byte battery){     //error
     error_code = error_code | B10000;
   }
   if((tb * 1.073) > 5){
-      error_code = error_code | B01000; 
+      error_code = error_code | B01000;
   }
   if((temp * 1.005) > 104 | (temp * 1.005) < 32){
     error_code = error_code | B00100;
@@ -422,7 +418,7 @@ byte alert(float tds, float temp, float tb, float cdt,byte battery){     //error
   }
 
   if((cdt * 1.073) > 1000){
-    error_code = error_code | B00001; 
+    error_code = error_code | B00001;
   }
 
   return error_code;
@@ -457,7 +453,7 @@ void SDCardRead() {                                   //print data in sd card fi
     Serial.println(F("--- end of file ---"));
   } else {
     // if the file didn't open, print an error:
-    //Serial.println("error opening test.txt");
+    Serial.println("error opening test.txt");
   }
 }
 
@@ -474,8 +470,8 @@ float getTDS(float temperature){                          //get tds reading from
 }
 
 float getTurbidity(){
-  int sensorValue = analogRead(A0);// read the input on analog pin 0:
-  float volt = sensorValue * (5.0 / 1023.0); // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
+  int sensorValue = analogRead(A0);                         // read the input on analog pin 0:
+  float volt = sensorValue * (5.0 / 1023.0);                // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
   
   if(volt < 2.5){
     return 3000;
@@ -512,36 +508,36 @@ float getTemp(){
   }
 
   ds.reset();
-  ds.select(addr);   //choose correct temperature sensor
-  ds.write(0x44,1); // start conversion, with parasite power on at the end
+  ds.select(addr);                              //choose correct temperature sensor
+  ds.write(0x44,1);                             // start conversion, with parasite power on at the end
 
-  byte present = ds.reset();      //1 = device is present
-  ds.select(addr);                //choose correct temperature sensor
-  ds.write(0xBE); // Read Scratchpad and crc
+  byte present = ds.reset();                    //1 = device is present
+  ds.select(addr);                              //choose correct temperature sensor
+  ds.write(0xBE);                               // Read Scratchpad and crc
 
 
-  for (int i = 0; i < 9; i++) { // we need 9 bytes 
+  for (int i = 0; i < 9; i++) {                 // we need 9 bytes
     data[i] = ds.read();
   }
 
-  ds.reset_search();            //reset between searches
+  ds.reset_search();                            //reset between searches
 
-  byte MSB = data[1];           // msb of temp measuremtn
-  byte LSB = data[0];           //lsb of temp measurement
+  byte MSB = data[1];                           // msb of temp measuremtn
+  byte LSB = data[0];                           //lsb of temp measurement
 
-  float tempRead = ((MSB << 8) | LSB); //using two's compliment //co,bine 2 numbers into 1
-  float TemperatureSum = tempRead / 16;     //convert temp reading
+  float tempRead = ((MSB << 8) | LSB);          //using two's compliment //co,bine 2 numbers into 1
+  float TemperatureSum = tempRead / 16;         //convert temp reading
 
   return TemperatureSum;
 
 }
 
 volatile double getFlow(){
-  flowCalc = flow * 4;                                    //convert L/h to L/15s to ensure correct flow is sent
+  flowCalc = flow * 4;                           //convert L/h to L/15s to ensure correct flow is sent
   return flowCalc;
 }
 
-bool getBattLevel(){                                      //read input of low battery circuit
+bool getBattLevel(){                             //read input of low battery circuit
   int x = digitalRead(14);
   if (x == 0) {
     return true;
